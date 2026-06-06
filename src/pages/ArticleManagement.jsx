@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, Edit2, Search, X } from 'lucide-react';
+import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Newspaper } from 'lucide-react';
 
 export default function ArticleManagement() {
   const [articles, setArticles] = useState([]);
   const [search, setSearch] = useState('');
   const [editId, setEditId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
-  const initialForm = { title: '', subtitle: '', description: '', keywords: [''] };
+  const initialForm = { title: '', subtitle: '', description: '', imageUrl: '', videoUrl: '', keywords: [''] };
   const [formData, setFormData] = useState(initialForm);
   const [token] = useState(localStorage.getItem('token'));
 
@@ -15,14 +17,22 @@ export default function ArticleManagement() {
   }, []);
 
   const fetchArticles = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch('http://localhost:5000/api/articles', {
+      const res = await fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/articles', {
         headers: { 'x-auth-token': token }
       });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: Failed to fetch articles.`);
+      }
       const data = await res.json();
       setArticles(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
+      setError(err.message || 'Network error occurred while loading articles.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,7 +44,7 @@ export default function ArticleManagement() {
         keywords: formData.keywords.filter(k => k.trim() !== '')
       };
       
-      const url = editId ? `http://localhost:5000/api/articles/${editId}` : 'http://localhost:5000/api/articles';
+      const url = editId ? `${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/articles/${editId}` : (import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/articles';
       const method = editId ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -67,6 +77,8 @@ export default function ArticleManagement() {
       title: article.title,
       subtitle: article.subtitle || '',
       description: article.description,
+      imageUrl: article.imageUrl || '',
+      videoUrl: article.videoUrl || '',
       keywords: article.keywords && article.keywords.length > 0 ? article.keywords : ['']
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -80,13 +92,17 @@ export default function ArticleManagement() {
   const handleDelete = async (id) => {
     if(window.confirm('Are you sure you want to delete this article?')) {
       try {
-        await fetch(`http://localhost:5000/api/articles/${id}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/articles/${id}`, {
           method: 'DELETE',
           headers: { 'x-auth-token': token }
         });
+        if (!res.ok) {
+          throw new Error('Failed to delete article.');
+        }
         fetchArticles();
       } catch (err) {
         console.error(err);
+        alert(err.message || 'Error deleting article.');
       }
     }
   };
@@ -96,6 +112,14 @@ export default function ArticleManagement() {
   return (
     <div className="page-container">
       <h1 className="page-title">Articles & News</h1>
+
+      {error && (
+        <div className="error-banner">
+          <AlertTriangle size={20} />
+          <span>{error}</span>
+          <button onClick={() => fetchArticles()} className="btn btn-secondary" style={{ padding: '4px 12px', height: 'auto', fontSize: '0.8rem' }}>Retry</button>
+        </div>
+      )}
       
       <div className="form-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -106,6 +130,12 @@ export default function ArticleManagement() {
         <form onSubmit={handleSubmit} className="cms-form">
           <input type="text" placeholder="Title" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required />
           <input type="text" placeholder="Subtitle" value={formData.subtitle} onChange={(e) => setFormData({...formData, subtitle: e.target.value})} />
+          
+          <div className="form-row">
+            <input type="text" placeholder="Image URL" value={formData.imageUrl} onChange={(e) => setFormData({...formData, imageUrl: e.target.value})} />
+            <input type="text" placeholder="Video URL" value={formData.videoUrl} onChange={(e) => setFormData({...formData, videoUrl: e.target.value})} />
+          </div>
+
           <textarea placeholder="Article Content / Description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} required rows="5" />
           
           <div style={{ marginBottom: '8px' }}>
@@ -158,35 +188,48 @@ export default function ArticleManagement() {
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
               <th style={{ padding: '12px' }}>Title</th>
-              <th style={{ padding: '12px' }}>Preview</th>
               <th style={{ padding: '12px' }}>Keywords</th>
               <th style={{ padding: '12px' }}>Date</th>
               <th style={{ padding: '12px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredArticles.map(article => (
-              <tr key={article._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <td style={{ padding: '12px', fontWeight: 'bold' }}>{article.title}</td>
-                <td style={{ padding: '12px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  {article.description.substring(0, 50)}...
-                </td>
-                <td style={{ padding: '12px' }}>
-                  {article.keywords?.slice(0,2).map((k,i) => <span key={i} className="badge">{k}</span>)}
-                  {article.keywords?.length > 2 && <span className="badge">+{article.keywords.length - 2}</span>}
-                </td>
-                <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                  {new Date(article.createdAt).toLocaleDateString()}
-                </td>
-                <td style={{ padding: '12px' }}>
-                  <button className="icon-btn" onClick={() => handleEdit(article)}><Edit2 size={18} /></button>
-                  <button className="icon-btn delete" onClick={() => handleDelete(article._id)}><Trash2 size={18} /></button>
-                </td>
-              </tr>
-            ))}
-            {filteredArticles.length === 0 && (
+            {loading ? (
+              [...Array(4)].map((_, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '220px' }}></div></td>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '100px' }}></div></td>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '40px' }}></div></td>
+                </tr>
+              ))
+            ) : (
+              filteredArticles.map(article => (
+                <tr key={article._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px', fontWeight: 'bold' }}>{article.title}</td>
+                  <td style={{ padding: '12px' }}>
+                    {article.keywords?.slice(0,2).map((k,i) => <span key={i} className="badge">{k}</span>)}
+                    {article.keywords?.length > 2 && <span className="badge">+{article.keywords.length - 2}</span>}
+                  </td>
+                  <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                    {new Date(article.createdAt).toLocaleDateString()}
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <button className="icon-btn" onClick={() => handleEdit(article)}><Edit2 size={18} /></button>
+                    <button className="icon-btn delete" onClick={() => handleDelete(article._id)}><Trash2 size={18} /></button>
+                  </td>
+                </tr>
+              ))
+            )}
+            {!loading && filteredArticles.length === 0 && (
               <tr>
-                <td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No articles found.</td>
+                <td colSpan="4" style={{ padding: '0' }}>
+                  <div className="empty-state">
+                    <Newspaper size={48} className="empty-state-icon" />
+                    <p style={{ fontWeight: '500', fontSize: '1.1rem', marginBottom: '8px' }}>No Articles Found</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>There are no articles or news drafts in the database currently.</p>
+                  </div>
+                </td>
               </tr>
             )}
           </tbody>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
-const Login = ({ setIsAuthenticated }) => {
+const Signup = () => {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,24 +15,22 @@ const Login = ({ setIsAuthenticated }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ username, email, password })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.msg || 'Login failed');
+        throw new Error(data.msg || 'Signup failed');
       }
 
-      // Save token to localStorage
-      localStorage.setItem('token', data.token);
-      setIsAuthenticated(true);
-      navigate('/');
+      // Redirect to login after successful signup
+      navigate('/login');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -44,11 +43,23 @@ const Login = ({ setIsAuthenticated }) => {
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
         <img src="/logo.png" alt="ITV Logo" style={{ maxWidth: '100px', width: '100%', height: 'auto', objectFit: 'contain' }} />
       </div>
-      <h2 className="gradient-text" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '1.8rem' }}>Welcome Back</h2>
+      <h2 className="gradient-text" style={{ textAlign: 'center', marginBottom: '30px', fontSize: '1.8rem' }}>Create Account</h2>
 
       {error && <div style={{ color: 'var(--danger)', marginBottom: '20px', textAlign: 'center' }}>{error}</div>}
 
       <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>Username</label>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="johndoe"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
+
         <div className="form-group">
           <label>Email Address</label>
           <input
@@ -66,7 +77,7 @@ const Login = ({ setIsAuthenticated }) => {
           <input
             type="password"
             className="form-control"
-            placeholder="Enter your password"
+            placeholder="Create a strong password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -74,15 +85,15 @@ const Login = ({ setIsAuthenticated }) => {
         </div>
 
         <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }} disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? 'Creating Account...' : 'Sign Up'}
         </button>
       </form>
 
       <p style={{ textAlign: 'center', marginTop: '20px', color: 'var(--text-secondary)' }}>
-        Don't have an account? <Link to="/signup" style={{ color: 'var(--accent-primary)' }}>Sign up</Link>
+        Already have an account? <Link to="/login" style={{ color: 'var(--accent-primary)' }}>Login</Link>
       </p>
     </div>
   );
 };
 
-export default Login;
+export default Signup;

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, Edit2, Search, X } from 'lucide-react';
+import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle } from 'lucide-react';
 
 export default function PlanManagement() {
   const [plans, setPlans] = useState([]);
   const [search, setSearch] = useState('');
   const [editId, setEditId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const initialForm = { name: '', amount: '', type: 'regular', benefits: [''] };
   const [formData, setFormData] = useState(initialForm);
@@ -15,14 +17,22 @@ export default function PlanManagement() {
   }, []);
 
   const fetchPlans = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch('http://localhost:5000/api/plans', {
+      const res = await fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/plans', {
         headers: { 'x-auth-token': token }
       });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: Failed to fetch subscription plans.`);
+      }
       const data = await res.json();
       setPlans(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
+      setError(err.message || 'Network error occurred while loading plans.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,7 +44,7 @@ export default function PlanManagement() {
         benefits: formData.benefits.filter(b => b.trim() !== '')
       };
       
-      const url = editId ? `http://localhost:5000/api/plans/${editId}` : 'http://localhost:5000/api/plans';
+      const url = editId ? `${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/plans/${editId}` : (import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/plans';
       const method = editId ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -80,13 +90,17 @@ export default function PlanManagement() {
   const handleDelete = async (id) => {
     if(window.confirm('Are you sure you want to delete this plan?')) {
       try {
-        await fetch(`http://localhost:5000/api/plans/${id}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/plans/${id}`, {
           method: 'DELETE',
           headers: { 'x-auth-token': token }
         });
+        if (!res.ok) {
+          throw new Error('Failed to delete plan.');
+        }
         fetchPlans();
       } catch (err) {
         console.error(err);
+        alert(err.message || 'Error deleting plan.');
       }
     }
   };
@@ -97,6 +111,14 @@ export default function PlanManagement() {
     <div className="page-container">
       <h1 className="page-title">Subscription Plans</h1>
       
+      {error && (
+        <div className="error-banner">
+          <AlertTriangle size={20} />
+          <span>{error}</span>
+          <button onClick={() => fetchPlans()} className="btn btn-secondary" style={{ padding: '4px 12px', height: 'auto', fontSize: '0.8rem' }}>Retry</button>
+        </div>
+      )}
+
       <div className="form-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2><PlusCircle size={20} /> {editId ? 'Edit Plan' : 'Create New Plan'}</h2>
@@ -168,23 +190,41 @@ export default function PlanManagement() {
             </tr>
           </thead>
           <tbody>
-            {filteredPlans.map(plan => (
-              <tr key={plan._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <td style={{ padding: '12px', fontWeight: 'bold' }}>{plan.name}</td>
-                <td style={{ padding: '12px', color: 'var(--success)' }}>${plan.amount}</td>
-                <td style={{ padding: '12px' }}><span className="plan-type">{plan.type}</span></td>
-                <td style={{ padding: '12px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  {plan.benefits.length} benefits listed
-                </td>
-                <td style={{ padding: '12px' }}>
-                  <button className="icon-btn" onClick={() => handleEdit(plan)}><Edit2 size={18} /></button>
-                  <button className="icon-btn delete" onClick={() => handleDelete(plan._id)}><Trash2 size={18} /></button>
-                </td>
-              </tr>
-            ))}
-            {filteredPlans.length === 0 && (
+            {loading ? (
+              [...Array(4)].map((_, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '150px' }}></div></td>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '60px' }}></div></td>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '120px' }}></div></td>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '40px' }}></div></td>
+                </tr>
+              ))
+            ) : (
+              filteredPlans.map(plan => (
+                <tr key={plan._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px', fontWeight: 'bold' }}>{plan.name}</td>
+                  <td style={{ padding: '12px', color: 'var(--success)' }}>${plan.amount}</td>
+                  <td style={{ padding: '12px' }}><span className="plan-type">{plan.type}</span></td>
+                  <td style={{ padding: '12px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    {plan.benefits.length} benefits listed
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <button className="icon-btn" onClick={() => handleEdit(plan)}><Edit2 size={18} /></button>
+                    <button className="icon-btn delete" onClick={() => handleDelete(plan._id)}><Trash2 size={18} /></button>
+                  </td>
+                </tr>
+              ))
+            )}
+            {!loading && filteredPlans.length === 0 && (
               <tr>
-                <td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No plans found.</td>
+                <td colSpan="5" style={{ padding: '0' }}>
+                  <div className="empty-state">
+                    <PlusCircle size={48} className="empty-state-icon" />
+                    <p style={{ fontWeight: '500', fontSize: '1.1rem', marginBottom: '8px' }}>No Plans Found</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>There are no subscription plans configured in the system.</p>
+                  </div>
+                </td>
               </tr>
             )}
           </tbody>
