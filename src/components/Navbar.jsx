@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Film, FileText, Tag, Users, LogOut, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Film, FileText, Tag, Users, LogOut, Sun, Moon, CreditCard, BarChart2 } from 'lucide-react';
 
 const Navbar = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
@@ -61,6 +61,18 @@ const Navbar = ({ setIsAuthenticated }) => {
           <Link to="/users" className={`nav-link ${isActive('/users')}`}>
             <Users size={20} />
             <span>Users</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/purchases" className={`nav-link ${isActive('/purchases')}`}>
+            <CreditCard size={20} />
+            <span>Purchases</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/analytics" className={`nav-link ${isActive('/analytics')}`}>
+            <BarChart2 size={20} />
+            <span>Analysis</span>
           </Link>
         </li>
       </ul>

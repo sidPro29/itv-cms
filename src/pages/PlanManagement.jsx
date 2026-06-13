@@ -7,7 +7,7 @@ export default function PlanManagement() {
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const initialForm = { name: '', amount: '', type: 'regular', benefits: [''] };
   const [formData, setFormData] = useState(initialForm);
   const [token] = useState(localStorage.getItem('token'));
@@ -43,7 +43,7 @@ export default function PlanManagement() {
         ...formData,
         benefits: formData.benefits.filter(b => b.trim() !== '')
       };
-      
+
       const url = editId ? `${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/plans/${editId}` : (import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/plans';
       const method = editId ? 'PUT' : 'POST';
 
@@ -55,13 +55,13 @@ export default function PlanManagement() {
         },
         body: JSON.stringify(payload)
       });
-      
+
       if (!res.ok) {
         const errData = await res.json();
         alert(`Failed to save plan: ${errData.msg || 'Unknown error'}`);
         return;
       }
-      
+
       setFormData(initialForm);
       setEditId(null);
       fetchPlans();
@@ -88,7 +88,7 @@ export default function PlanManagement() {
   };
 
   const handleDelete = async (id) => {
-    if(window.confirm('Are you sure you want to delete this plan?')) {
+    if (window.confirm('Are you sure you want to delete this plan? This will be permanently deleted.')) {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/plans/${id}`, {
           method: 'DELETE',
@@ -110,7 +110,7 @@ export default function PlanManagement() {
   return (
     <div className="page-container">
       <h1 className="page-title">Subscription Plans</h1>
-      
+
       {error && (
         <div className="error-banner">
           <AlertTriangle size={20} />
@@ -122,14 +122,14 @@ export default function PlanManagement() {
       <div className="form-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2><PlusCircle size={20} /> {editId ? 'Edit Plan' : 'Create New Plan'}</h2>
-          {editId && <button onClick={cancelEdit} className="btn btn-secondary"><X size={16}/> Cancel</button>}
+          {editId && <button onClick={cancelEdit} className="btn btn-secondary"><X size={16} /> Cancel</button>}
         </div>
-        
+
         <form onSubmit={handleSubmit} className="cms-form">
           <div className="form-row">
-            <input type="text" placeholder="Plan Name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
-            <input type="number" placeholder="Amount (USD)" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} required />
-            <select value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})}>
+            <input type="text" placeholder="Plan Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+            <input type="number" placeholder="Amount (USD)" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required />
+            <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
               <option value="regular">Regular</option>
               <option value="adsPlan">Ads Plan</option>
             </select>
@@ -141,17 +141,17 @@ export default function PlanManagement() {
                 <input type="text" placeholder={`Benefit ${index + 1}`} value={benefit} onChange={(e) => {
                   const newB = [...formData.benefits];
                   newB[index] = e.target.value;
-                  setFormData({...formData, benefits: newB});
+                  setFormData({ ...formData, benefits: newB });
                 }} required={index === 0} />
-                
+
                 {index === formData.benefits.length - 1 ? (
-                  <button type="button" className="btn btn-secondary" onClick={() => setFormData({...formData, benefits: [...formData.benefits, '']})}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setFormData({ ...formData, benefits: [...formData.benefits, ''] })}>
                     + Add
                   </button>
                 ) : (
                   <button type="button" className="icon-btn delete" onClick={() => {
                     const newB = formData.benefits.filter((_, i) => i !== index);
-                    setFormData({...formData, benefits: newB});
+                    setFormData({ ...formData, benefits: newB });
                   }}>
                     <Trash2 size={20} />
                   </button>
@@ -168,13 +168,13 @@ export default function PlanManagement() {
           <h3 style={{ fontSize: '1.2rem' }}>All Plans</h3>
           <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--text-muted)' }} />
-            <input 
-              type="text" 
-              placeholder="Search plans..." 
-              value={search} 
-              onChange={(e) => setSearch(e.target.value)} 
-              className="form-control" 
-              style={{ paddingLeft: '36px', width: '250px' }} 
+            <input
+              type="text"
+              placeholder="Search plans..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="form-control"
+              style={{ paddingLeft: '36px', width: '250px' }}
             />
           </div>
         </div>

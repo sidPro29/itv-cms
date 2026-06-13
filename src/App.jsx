@@ -10,6 +10,8 @@ import MediaManagement from './pages/MediaManagement';
 import ArticleManagement from './pages/ArticleManagement';
 import PlanManagement from './pages/PlanManagement';
 import UserManagement from './pages/UserManagement';
+import Purchases from './pages/Purchases';
+import Analytics from './pages/Analytics';
 
 // Components
 import Navbar from './components/Navbar';
@@ -47,6 +49,8 @@ function App() {
             <Route path="/articles" element={<PrivateRoute isAuthenticated={isAuthenticated}><ArticleManagement /></PrivateRoute>} />
             <Route path="/plans" element={<PrivateRoute isAuthenticated={isAuthenticated}><PlanManagement /></PrivateRoute>} />
             <Route path="/users" element={<PrivateRoute isAuthenticated={isAuthenticated}><UserManagement /></PrivateRoute>} />
+            <Route path="/purchases" element={<PrivateRoute isAuthenticated={isAuthenticated}><Purchases /></PrivateRoute>} />
+            <Route path="/analytics" element={<PrivateRoute isAuthenticated={isAuthenticated}><Analytics /></PrivateRoute>} />
             
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" />} />

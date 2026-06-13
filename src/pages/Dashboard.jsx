@@ -4,12 +4,14 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const Dashboard = () => {
   const [statsData, setStatsData] = useState({
-    users: 0,
+    subscribers: 0,
     movies: 0,
     videos: 0,
     tvshows: 0,
+    episodes: 0,
     articles: 0,
-    revenue: 45200 // Hardcoded until Stripe is integrated
+    revenue: 0,
+    subscriberGrowth: []
   });
 
   const [recentActivity, setRecentActivity] = useState([]);
@@ -21,33 +23,31 @@ const Dashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      const [usersRes, mediaRes, articlesRes] = await Promise.all([
-        fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/users', { headers: { 'x-auth-token': token } }),
+      const [statsRes, mediaRes, articlesRes] = await Promise.all([
+        fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/admin/stats', { headers: { 'x-auth-token': token } }),
         fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/media-assets', { headers: { 'x-auth-token': token } }),
         fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/articles', { headers: { 'x-auth-token': token } })
       ]);
 
-      if (!usersRes.ok || !mediaRes.ok || !articlesRes.ok) {
+      if (!statsRes.ok || !mediaRes.ok || !articlesRes.ok) {
         throw new Error('Failed to fetch dashboard metrics from one or more server endpoints.');
       }
 
-      const [users, media, articles] = await Promise.all([
-        usersRes.json(),
+      const [stats, media, articles] = await Promise.all([
+        statsRes.json(),
         mediaRes.json(),
         articlesRes.json()
       ]);
 
-      const movies = media.filter(m => m.type === 'movie' || m.type === 'movies').length;
-      const videos = media.filter(m => m.type === 'video' || m.type === 'videos').length;
-      const tvshows = media.filter(m => m.type === 'tvshow' || m.type === 'tvshows').length;
-
       setStatsData({
-        users: users.length,
-        movies,
-        videos,
-        tvshows,
+        subscribers: stats.totalSubscribers || 0,
+        movies: stats.contentDistribution?.totalMovies || 0,
+        videos: stats.contentDistribution?.totalVideos || 0,
+        tvshows: stats.contentDistribution?.totalShows || 0,
+        episodes: stats.contentDistribution?.totalEpisodes || 0,
         articles: articles.length,
-        revenue: 45200
+        revenue: stats.totalRevenue || 0,
+        subscriberGrowth: stats.subscriberGrowth || []
       });
 
       // Combine media and articles for recent activity (take top 6)
@@ -71,28 +71,25 @@ const Dashboard = () => {
   }, [token]);
 
   const stats = [
-    { title: 'Total Users', value: statsData.users, icon: <Users size={24} />, change: '+12% vs last month', positive: true, desc: 'Registered accounts' },
+    { title: 'Total Subscribers', value: statsData.subscribers, icon: <Users size={24} />, change: '+12% vs last month', positive: true, desc: 'Registered accounts' },
     { title: 'Total Movies', value: statsData.movies, icon: <Film size={24} />, change: '+5% vs last month', positive: true, desc: 'Full length movies' },
     { title: 'Total TV Shows', value: statsData.tvshows, icon: <Tv size={24} />, change: '+2% vs last month', positive: true, desc: 'Series and shows' },
     { title: 'Total Videos', value: statsData.videos, icon: <Video size={24} />, change: '+25% vs last month', positive: true, desc: 'Short clips and videos' },
-    { title: 'News Articles', value: statsData.articles, icon: <Newspaper size={24} />, change: '+18% vs last month', positive: true, desc: 'Published articles' },
-    { title: 'Total Revenue', value: `$${statsData.revenue.toLocaleString()}`, icon: <DollarSign size={24} />, change: '-2% vs last month', positive: false, desc: 'Monthly recurring revenue' },
+    { title: 'Total Episodes', value: statsData.episodes, icon: <Tv size={24} />, change: '+10% vs last month', positive: true, desc: 'Episodes' },
+    { title: 'Total Revenue', value: `$${statsData.revenue.toLocaleString()}`, icon: <DollarSign size={24} />, change: '+15% vs last month', positive: true, desc: 'Total sales volume' },
   ];
 
   const contentDistributionData = [
     { name: 'Movies', count: statsData.movies },
     { name: 'TV Shows', count: statsData.tvshows },
     { name: 'Videos', count: statsData.videos },
+    { name: 'Episodes', count: statsData.episodes },
     { name: 'Articles', count: statsData.articles },
   ];
 
-  const userGrowthData = [
-    { month: 'Jan', users: Math.floor(statsData.users * 0.2) },
-    { month: 'Feb', users: Math.floor(statsData.users * 0.4) },
-    { month: 'Mar', users: Math.floor(statsData.users * 0.6) },
-    { month: 'Apr', users: Math.floor(statsData.users * 0.75) },
-    { month: 'May', users: Math.floor(statsData.users * 0.9) },
-    { month: 'Jun', users: statsData.users || 1 },
+  const userGrowthData = statsData.subscriberGrowth.length > 0 ? statsData.subscriberGrowth : [
+    { name: 'Jan', count: 0 },
+    { name: 'Feb', count: 0 }
   ];
 
   return (
@@ -169,9 +166,9 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* User Growth Chart */}
+        {/* Subscriber Growth Chart */}
         <div className="glass" style={{ padding: '24px', borderRadius: '12px' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '20px' }}>User Growth (Last 6 Months)</h3>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '20px' }}>Subscriber Growth (Last 6 Months)</h3>
           {loading ? (
             <div className="skeleton" style={{ width: '100%', height: 300, borderRadius: '8px' }}></div>
           ) : (
@@ -179,10 +176,10 @@ const Dashboard = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={userGrowthData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-                  <XAxis dataKey="month" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)' }} />
+                  <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)' }} />
                   <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)' }} />
                   <Tooltip contentStyle={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-primary)' }} />
-                  <Line type="monotone" dataKey="users" stroke="var(--accent-secondary)" strokeWidth={3} dot={{ fill: 'var(--accent-secondary)', r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="count" stroke="var(--accent-secondary)" strokeWidth={3} dot={{ fill: 'var(--accent-secondary)', r: 4 }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

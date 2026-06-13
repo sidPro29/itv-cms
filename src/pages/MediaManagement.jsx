@@ -18,7 +18,7 @@ export default function MediaManagement() {
   // States for parent program searchable dropdown
   const [programSearch, setProgramSearch] = useState('');
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
-  
+
   const initialForm = { title: '', subtitle: '', description: '', type: 'movie', languages: [], images: [''], programId: '', programName: '', membership_level: [], genres: [], tags: [] };
   // New UI state for video/trailer handling
   const [videoMethod, setVideoMethod] = useState('url'); // 'upload' | 'url' | 'clipId'
@@ -117,13 +117,13 @@ export default function MediaManagement() {
         },
         body: JSON.stringify(payload)
       });
-      
+
       if (!res.ok) {
         const errData = await res.json();
         alert(`Failed to save media: ${errData.msg || 'Unknown error'}`);
         return;
       }
-      
+
       setFormData(initialForm);
       setEditId(null);
       setLangInput('');
@@ -170,7 +170,7 @@ export default function MediaManagement() {
   };
 
   const handleDelete = async (id) => {
-    if(window.confirm('Are you sure you want to delete this media asset?')) {
+    if (window.confirm('Are you sure you want to delete this media asset? This will be permanently deleted.')) {
       try {
         const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/media-assets/${id}`, {
           method: 'DELETE',
@@ -215,13 +215,13 @@ export default function MediaManagement() {
           <button onClick={() => fetchAssets()} className="btn btn-secondary" style={{ padding: '4px 12px', height: 'auto', fontSize: '0.8rem' }}>Retry</button>
         </div>
       )}
-      
+
       <div className="form-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2><PlusCircle size={20} /> {editId ? 'Edit Media Asset' : 'Add New Media'}</h2>
-          {editId && <button onClick={cancelEdit} className="btn btn-secondary"><X size={16}/> Cancel</button>}
+          {editId && <button onClick={cancelEdit} className="btn btn-secondary"><X size={16} /> Cancel</button>}
         </div>
-        
+
         <form onSubmit={handleSubmit} className="cms-form">
           {/* Video – method selector + input + svpRefNo in one row */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
@@ -280,18 +280,18 @@ export default function MediaManagement() {
           </div>
 
           <div className="form-row">
-            <select value={formData.type === 'movies' ? 'movie' : formData.type === 'tvshows' ? 'tvshow' : formData.type === 'videos' ? 'video' : formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})}>
+            <select value={formData.type === 'movies' ? 'movie' : formData.type === 'tvshows' ? 'tvshow' : formData.type === 'videos' ? 'video' : formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
               <option value="movie">Movie</option>
               <option value="tvshow">TV Show</option>
               <option value="episode">Episode</option>
               <option value="video">Video</option>
             </select>
-            <input type="text" placeholder="Title" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required />
-            <input type="text" placeholder="Subtitle" value={formData.subtitle} onChange={(e) => setFormData({...formData, subtitle: e.target.value})} />
+            <input type="text" placeholder="Title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
+            <input type="text" placeholder="Subtitle" value={formData.subtitle} onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })} />
           </div>
 
-          <textarea placeholder="Description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} required style={{ height: '70px', minHeight: '70px' }} />
-          
+          <textarea placeholder="Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required style={{ height: '70px', minHeight: '70px' }} />
+
           {formData.type === 'episode' && (
             <div style={{ position: 'relative', marginBottom: '16px' }}>
               <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Parent TV Show Program</label>
@@ -310,7 +310,7 @@ export default function MediaManagement() {
                   <span>{formData.programName || "Select a TV Show..."}</span>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>▼</span>
                 </div>
-                
+
                 {showProgramDropdown && (
                   <div
                     className="glass"
@@ -461,17 +461,17 @@ export default function MediaManagement() {
                   <input type="text" placeholder={`Image URL ${index + 1}`} value={img} onChange={(e) => {
                     const newI = [...formData.images];
                     newI[index] = e.target.value;
-                    setFormData({...formData, images: newI});
+                    setFormData({ ...formData, images: newI });
                   }} style={{ margin: 0 }} />
-                  
+
                   {index === formData.images.length - 1 ? (
-                    <button type="button" className="btn btn-secondary" onClick={() => setFormData({...formData, images: [...formData.images, '']})} style={{ padding: '0 15px', height: '42px' }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setFormData({ ...formData, images: [...formData.images, ''] })} style={{ padding: '0 15px', height: '42px' }}>
                       + Add
                     </button>
                   ) : (
                     <button type="button" className="icon-btn delete" onClick={() => {
                       const newI = formData.images.filter((_, i) => i !== index);
-                      setFormData({...formData, images: newI});
+                      setFormData({ ...formData, images: newI });
                     }} style={{ height: '42px' }}>
                       <Trash2 size={20} />
                     </button>
@@ -647,7 +647,7 @@ export default function MediaManagement() {
             <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-tertiary)', padding: '4px', borderRadius: '24px', border: '1px solid var(--border-color)' }}>
               {['all', 'movie', 'tvshow', 'episode', 'video'].map(type => {
                 const getLabel = (t) => {
-                  switch(t) {
+                  switch (t) {
                     case 'all': return 'All';
                     case 'movie': return 'Movies';
                     case 'tvshow': return 'TV Shows';
@@ -683,13 +683,13 @@ export default function MediaManagement() {
             {/* Search Input */}
             <div style={{ position: 'relative' }}>
               <Search size={18} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--text-muted)' }} />
-              <input 
-                type="text" 
-                placeholder="Search media..." 
-                value={search} 
-                onChange={(e) => setSearch(e.target.value)} 
-                className="form-control" 
-                style={{ paddingLeft: '36px', width: '200px', margin: 0 }} 
+              <input
+                type="text"
+                placeholder="Search media..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="form-control"
+                style={{ paddingLeft: '36px', width: '200px', margin: 0 }}
               />
             </div>
           </div>
@@ -720,14 +720,14 @@ export default function MediaManagement() {
               filteredAssets.map(asset => (
                 <tr key={asset._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <td style={{ padding: '12px', fontWeight: 'bold' }}>{asset.title}</td>
-                  <td style={{ padding: '12px' }}><span className="badge" style={{textTransform: 'uppercase'}}>{asset.type}</span></td>
+                  <td style={{ padding: '12px' }}><span className="badge" style={{ textTransform: 'uppercase' }}>{asset.type}</span></td>
                   <td style={{ padding: '12px' }}>
-                    {asset.membership_level && asset.membership_level.length > 0 
-                      ? asset.membership_level.map((m, i) => <span key={i} className="badge" style={{background: 'var(--accent-primary)', color: 'white'}}>{m.planName}</span>)
-                      : <span style={{color: 'var(--text-muted)', fontSize: '0.8rem'}}>Free</span>}
+                    {asset.membership_level && asset.membership_level.length > 0
+                      ? asset.membership_level.map((m, i) => <span key={i} className="badge" style={{ background: 'var(--accent-primary)', color: 'white' }}>{m.planName}</span>)
+                      : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Free</span>}
                   </td>
                   <td style={{ padding: '12px' }}>
-                    {asset.languages?.slice(0,2).map((l,i) => <span key={i} className="badge">{l}</span>)}
+                    {asset.languages?.slice(0, 2).map((l, i) => <span key={i} className="badge">{l}</span>)}
                   </td>
                   <td style={{ padding: '12px' }}>
                     <button className="icon-btn" onClick={() => handleEdit(asset)}><Edit2 size={18} /></button>
