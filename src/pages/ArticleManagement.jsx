@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Newspaper } from 'lucide-react';
+import { getUserRole } from '../utils/auth';
 
 export default function ArticleManagement() {
+  const userRole = getUserRole();
   const [articles, setArticles] = useState([]);
   const [search, setSearch] = useState('');
   const [editId, setEditId] = useState(null);
@@ -121,6 +123,7 @@ export default function ArticleManagement() {
         </div>
       )}
 
+      {userRole !== 'admin' && (
       <div className="form-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2><PlusCircle size={20} /> {editId ? 'Edit Article' : 'Draft New Article'}</h2>
@@ -167,6 +170,7 @@ export default function ArticleManagement() {
           <button type="submit" className="primary-btn">{editId ? 'Update Article' : 'Publish Article'}</button>
         </form>
       </div>
+      )}
 
       <div className="glass table-container" style={{ padding: '20px', borderRadius: '12px', overflowX: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -190,7 +194,7 @@ export default function ArticleManagement() {
               <th style={{ padding: '12px' }}>Title</th>
               <th style={{ padding: '12px' }}>Keywords</th>
               <th style={{ padding: '12px' }}>Date</th>
-              <th style={{ padding: '12px' }}>Actions</th>
+              {userRole !== 'admin' && <th style={{ padding: '12px' }}>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -214,10 +218,12 @@ export default function ArticleManagement() {
                   <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                     {new Date(article.createdAt).toLocaleDateString()}
                   </td>
+                  {userRole !== 'admin' && (
                   <td style={{ padding: '12px' }}>
                     <button className="icon-btn" onClick={() => handleEdit(article)}><Edit2 size={18} /></button>
                     <button className="icon-btn delete" onClick={() => handleDelete(article._id)}><Trash2 size={18} /></button>
                   </td>
+                  )}
                 </tr>
               ))
             )}

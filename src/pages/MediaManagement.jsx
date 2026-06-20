@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Film, Tv } from 'lucide-react';
+import { getUserRole } from '../utils/auth';
 
 export default function MediaManagement() {
+  const userRole = getUserRole();
   const [assets, setAssets] = useState([]);
   const [plans, setPlans] = useState([]);
   const [search, setSearch] = useState('');
@@ -19,7 +21,7 @@ export default function MediaManagement() {
   const [programSearch, setProgramSearch] = useState('');
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
 
-  const initialForm = { title: '', subtitle: '', description: '', type: 'movie', languages: [], images: [''], programId: '', programName: '', membership_level: [], genres: [], tags: [] };
+  const initialForm = { title: '', subtitle: '', rating: '', description: '', type: 'movie', languages: [], images: [''], programId: '', programName: '', membership_level: [], genres: [], tags: [] };
   // New UI state for video/trailer handling
   const [videoMethod, setVideoMethod] = useState('url'); // 'upload' | 'url' | 'clipId'
   const [videoInput, setVideoInput] = useState(''); // file object or string
@@ -139,8 +141,9 @@ export default function MediaManagement() {
   const handleEdit = (asset) => {
     setEditId(asset._id);
     setFormData({
-      title: asset.title,
+      title: asset.title || '',
       subtitle: asset.subtitle || '',
+      rating: asset.rating || '',
       description: asset.description,
       type: asset.type,
       languages: asset.languages && asset.languages.length > 0 ? asset.languages : [],
@@ -216,6 +219,7 @@ export default function MediaManagement() {
         </div>
       )}
 
+      {userRole !== 'admin' && (
       <div className="form-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2><PlusCircle size={20} /> {editId ? 'Edit Media Asset' : 'Add New Media'}</h2>
@@ -288,6 +292,7 @@ export default function MediaManagement() {
             </select>
             <input type="text" placeholder="Title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
             <input type="text" placeholder="Subtitle" value={formData.subtitle} onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })} />
+            <input type="text" placeholder="Rating (e.g. 3+ U/A)" value={formData.rating} onChange={(e) => setFormData({ ...formData, rating: e.target.value })} />
           </div>
 
           <textarea placeholder="Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required style={{ height: '70px', minHeight: '70px' }} />
@@ -638,6 +643,7 @@ export default function MediaManagement() {
           <button type="submit" className="primary-btn">{editId ? 'Update Media' : 'Save Media'}</button>
         </form>
       </div>
+      )}
 
       <div className="glass table-container" style={{ padding: '20px', borderRadius: '12px', overflowX: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
@@ -702,7 +708,7 @@ export default function MediaManagement() {
               <th style={{ padding: '12px' }}>Type</th>
               <th style={{ padding: '12px' }}>Membership</th>
               <th style={{ padding: '12px' }}>Languages</th>
-              <th style={{ padding: '12px' }}>Actions</th>
+              {userRole !== 'admin' && <th style={{ padding: '12px' }}>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -729,10 +735,12 @@ export default function MediaManagement() {
                   <td style={{ padding: '12px' }}>
                     {asset.languages?.slice(0, 2).map((l, i) => <span key={i} className="badge">{l}</span>)}
                   </td>
+                  {userRole !== 'admin' && (
                   <td style={{ padding: '12px' }}>
                     <button className="icon-btn" onClick={() => handleEdit(asset)}><Edit2 size={18} /></button>
                     <button className="icon-btn delete" onClick={() => handleDelete(asset._id)}><Trash2 size={18} /></button>
                   </td>
+                  )}
                 </tr>
               ))
             )}

@@ -30,8 +30,13 @@ const Login = ({ setIsAuthenticated }) => {
 
       // Save token to localStorage
       localStorage.setItem('token', data.token);
-      setIsAuthenticated(true);
-      navigate('/');
+      
+      if (data.requirePasswordChange) {
+        navigate('/force-password-change');
+      } else {
+        setIsAuthenticated(true);
+        navigate('/');
+      }
     } catch (err) {
       setError(err.message);
     } finally {

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle } from 'lucide-react';
+import { getUserRole } from '../utils/auth';
 
 export default function PlanManagement() {
+  const userRole = getUserRole();
   const [plans, setPlans] = useState([]);
   const [search, setSearch] = useState('');
   const [editId, setEditId] = useState(null);
@@ -119,6 +121,7 @@ export default function PlanManagement() {
         </div>
       )}
 
+      {userRole !== 'admin' && (
       <div className="form-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2><PlusCircle size={20} /> {editId ? 'Edit Plan' : 'Create New Plan'}</h2>
@@ -162,6 +165,7 @@ export default function PlanManagement() {
           <button type="submit" className="primary-btn">{editId ? 'Update Plan' : 'Save Plan'}</button>
         </form>
       </div>
+      )}
 
       <div className="glass table-container" style={{ padding: '20px', borderRadius: '12px', overflowX: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -186,7 +190,7 @@ export default function PlanManagement() {
               <th style={{ padding: '12px' }}>Amount</th>
               <th style={{ padding: '12px' }}>Type</th>
               <th style={{ padding: '12px' }}>Benefits</th>
-              <th style={{ padding: '12px' }}>Actions</th>
+              {userRole !== 'admin' && <th style={{ padding: '12px' }}>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -209,10 +213,12 @@ export default function PlanManagement() {
                   <td style={{ padding: '12px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                     {plan.benefits.length} benefits listed
                   </td>
+                  {userRole !== 'admin' && (
                   <td style={{ padding: '12px' }}>
                     <button className="icon-btn" onClick={() => handleEdit(plan)}><Edit2 size={18} /></button>
                     <button className="icon-btn delete" onClick={() => handleDelete(plan._id)}><Trash2 size={18} /></button>
                   </td>
+                  )}
                 </tr>
               ))
             )}

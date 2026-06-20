@@ -2,8 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState, useEffect } from 'react';
 import './App.css';
 
-// Pages (We will create these next)
 import Login from './pages/Login';
+import ForcePasswordChange from './pages/ForcePasswordChange';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import MediaManagement from './pages/MediaManagement';
@@ -41,6 +41,7 @@ function App() {
         <div className={isAuthenticated ? "main-content" : ""}>
           <Routes>
             <Route path="/login" element={!isAuthenticated ? <Login setIsAuthenticated={setIsAuthenticated} /> : <Navigate to="/" />} />
+            <Route path="/force-password-change" element={<ForcePasswordChange setIsAuthenticated={setIsAuthenticated} />} />
             <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/" />} />
             
             {/* Protected Routes */}
