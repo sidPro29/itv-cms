@@ -266,9 +266,10 @@ export default function UserManagement() {
                   </td>
                   <td style={{ padding: '12px' }}>
                     {editingUserId === user._id ? (
-                      <select className="form-control" style={{ padding: '6px' }} value={editData.role} onChange={e => setEditData({...editData, role: e.target.value})}>
+                      <select className="form-control" style={{ padding: '6px' }} value={editData.role} onChange={e => setEditData({...editData, role: e.target.value})} disabled={user.role === 'superAdmin'}>
                         <option value="user">User</option>
                         <option value="admin">Admin</option>
+                        {user.role === 'superAdmin' && <option value="superAdmin">Super Admin</option>}
                       </select>
                     ) : <span className="badge">{user.role}</span>}
                   </td>
