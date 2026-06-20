@@ -165,7 +165,7 @@ export default function MediaManagement() {
     setTagInput('');
     setShowFormModal(true);
   };
-
+  const cancelEdit = () => {
     setEditId(null);
     setFormData(initialForm);
     setLangInput('');
