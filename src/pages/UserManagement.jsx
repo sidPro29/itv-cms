@@ -8,6 +8,7 @@ export default function UserManagement() {
   const [availablePlans, setAvailablePlans] = useState([]);
   const [metrics, setMetrics] = useState({ total: 0, activePlans: 0, admins: 0 });
   const [editingUserId, setEditingUserId] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -136,6 +137,7 @@ export default function UserManagement() {
       role: user.role,
       activePlans: [...(user.activePlans || [])]
     });
+    setShowEditModal(true);
   };
 
   const handleSave = async (id) => {
@@ -153,6 +155,7 @@ export default function UserManagement() {
         throw new Error(errData.msg || `HTTP ${res.status}: Failed to update user.`);
       }
       setEditingUserId(null);
+      setShowEditModal(false);
       fetchUsers();
     } catch (err) {
       console.error(err);
@@ -249,87 +252,21 @@ export default function UserManagement() {
               users.map(user => (
                 <tr key={user._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <td style={{ padding: '12px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user._id}</td>
+                  <td style={{ padding: '12px' }}>{user.username}</td>
+                  <td style={{ padding: '12px' }}>{user.email}</td>
+                  <td style={{ padding: '12px' }}>{user.mobile || '-'}</td>
+                  <td style={{ padding: '12px' }}><span className="badge">{user.role}</span></td>
                   <td style={{ padding: '12px' }}>
-                    {editingUserId === user._id ? (
-                      <input className="form-control" style={{ padding: '6px' }} value={editData.username} onChange={e => setEditData({...editData, username: e.target.value})} />
-                    ) : user.username}
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    {editingUserId === user._id ? (
-                      <input className="form-control" style={{ padding: '6px' }} value={editData.email} onChange={e => setEditData({...editData, email: e.target.value})} />
-                    ) : user.email}
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    {editingUserId === user._id ? (
-                      <input className="form-control" style={{ padding: '6px' }} value={editData.mobile} onChange={e => setEditData({...editData, mobile: e.target.value})} />
-                    ) : (user.mobile || '-')}
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    {editingUserId === user._id ? (
-                      <select className="form-control" style={{ padding: '6px' }} value={editData.role} onChange={e => setEditData({...editData, role: e.target.value})} disabled={user.role === 'superAdmin'}>
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
-                        {user.role === 'superAdmin' && <option value="superAdmin">Super Admin</option>}
-                      </select>
-                    ) : <span className="badge">{user.role}</span>}
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    {editingUserId === user._id ? (
-                      <div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
-                          {editData.activePlans.map((p, i) => (
-                            <span key={i} className="badge" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              {p.planName}
-                              <X size={12} style={{ cursor: 'pointer' }} onClick={() => {
-                                const newPlans = [...editData.activePlans];
-                                newPlans.splice(i, 1);
-                                setEditData({...editData, activePlans: newPlans});
-                              }}/>
-                            </span>
-                          ))}
-                        </div>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          <select id={`plan-select-${user._id}`} className="form-control" style={{ padding: '4px', fontSize: '0.8rem' }}>
-                            <option value="">Select Plan...</option>
-                            {availablePlans.map(plan => (
-                              <option key={plan._id} value={plan._id}>{plan.name}</option>
-                            ))}
-                          </select>
-                          <button className="icon-btn" style={{ padding: '4px' }} onClick={(e) => {
-                            e.preventDefault();
-                            const selectEl = document.getElementById(`plan-select-${user._id}`);
-                            const selectedPlanId = selectEl.value;
-                            if (selectedPlanId) {
-                              const planDetails = availablePlans.find(p => p._id === selectedPlanId);
-                              if (planDetails && !editData.activePlans.find(p => p.planId === planDetails._id)) {
-                                setEditData({
-                                  ...editData,
-                                  activePlans: [...editData.activePlans, { planId: planDetails._id, planName: planDetails.name, expiryDate: new Date(Date.now() + planDetails.durationInDays * 24 * 60 * 60 * 1000) }]
-                                });
-                              }
-                            }
-                          }}><Plus size={16} /></button>
-                        </div>
-                      </div>
-                    ) : (
-                      user.activePlans && user.activePlans.length > 0 ? (
-                        user.activePlans.map((p, i) => <span key={i} className="badge">{p.planName}</span>)
-                      ) : '-'
-                    )}
+                    {user.activePlans && user.activePlans.length > 0 ? (
+                      user.activePlans.map((p, i) => <span key={i} className="badge">{p.planName}</span>)
+                    ) : '-'}
                   </td>
                   {userRole === 'superAdmin' && (
                   <td style={{ padding: '12px' }}>
-                    {editingUserId === user._id ? (
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button className="icon-btn" style={{ color: 'var(--success)' }} onClick={() => handleSave(user._id)}><Save size={18} /></button>
-                        <button className="icon-btn delete" onClick={() => setEditingUserId(null)}><X size={18} /></button>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button className="icon-btn" onClick={() => handleEditClick(user)}><Edit2 size={18} /></button>
-                        <button className="icon-btn delete" onClick={() => handleDeleteUser(user._id)}><Trash2 size={18} /></button>
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="icon-btn" onClick={() => handleEditClick(user)}><Edit2 size={18} /></button>
+                      <button className="icon-btn delete" onClick={() => handleDeleteUser(user._id)}><Trash2 size={18} /></button>
+                    </div>
                   </td>
                   )}
                 </tr>
@@ -403,6 +340,96 @@ export default function UserManagement() {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {showEditModal && editingUserId && (
+        <div className="modal-overlay" onClick={() => { setShowEditModal(false); setEditingUserId(null); }}>
+          <div className="modal-content glass animate-scale-in" onClick={e => e.stopPropagation()} style={{ width: '600px', maxWidth: '90vw' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2>Edit User</h2>
+              <button onClick={() => { setShowEditModal(false); setEditingUserId(null); }} className="icon-btn"><X size={24} /></button>
+            </div>
+            
+            <form onSubmit={(e) => { e.preventDefault(); handleSave(editingUserId); }} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Username</label>
+                  <input className="form-control" value={editData.username} onChange={e => setEditData({...editData, username: e.target.value})} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Email</label>
+                  <input type="email" className="form-control" value={editData.email} onChange={e => setEditData({...editData, email: e.target.value})} required />
+                </div>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Mobile</label>
+                  <input className="form-control" value={editData.mobile} onChange={e => setEditData({...editData, mobile: e.target.value})} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Role</label>
+                  <select className="form-control" value={editData.role} onChange={e => setEditData({...editData, role: e.target.value})} disabled={users.find(u => u._id === editingUserId)?.role === 'superAdmin'}>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    {users.find(u => u._id === editingUserId)?.role === 'superAdmin' && <option value="superAdmin">Super Admin</option>}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Active Plans</label>
+                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '15px' }}>
+                    {editData.activePlans.length === 0 && <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No active plans.</span>}
+                    {editData.activePlans.map((p, i) => (
+                      <span key={i} className="badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', fontSize: '0.9rem' }}>
+                        {p.planName}
+                        <X size={14} style={{ cursor: 'pointer', opacity: 0.7 }} onClick={() => {
+                          const newPlans = [...editData.activePlans];
+                          newPlans.splice(i, 1);
+                          setEditData({...editData, activePlans: newPlans});
+                        }}/>
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <select id="modal-plan-select" className="form-control" style={{ flex: 1 }}>
+                      <option value="">Select Plan to Add...</option>
+                      {availablePlans.map(plan => (
+                        <option key={plan._id} value={plan._id}>{plan.name}</option>
+                      ))}
+                    </select>
+                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '5px' }} onClick={(e) => {
+                      e.preventDefault();
+                      const selectEl = document.getElementById('modal-plan-select');
+                      const selectedPlanId = selectEl.value;
+                      if (selectedPlanId) {
+                        const planDetails = availablePlans.find(p => p._id === selectedPlanId);
+                        if (planDetails && !editData.activePlans.find(p => p.planId === planDetails._id)) {
+                          setEditData({
+                            ...editData,
+                            activePlans: [...editData.activePlans, { planId: planDetails._id, planName: planDetails.name, expiryDate: new Date(Date.now() + planDetails.durationInDays * 24 * 60 * 60 * 1000) }]
+                          });
+                        }
+                      }
+                    }}>
+                      <Plus size={18} /> Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowEditModal(false); setEditingUserId(null); }}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Save size={18} /> Save Changes
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
