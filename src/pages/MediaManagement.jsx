@@ -9,6 +9,7 @@ export default function MediaManagement() {
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [editId, setEditId] = useState(null);
+  const [showFormModal, setShowFormModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -131,6 +132,7 @@ export default function MediaManagement() {
       setLangInput('');
       setGenreInput('');
       setTagInput('');
+      setShowFormModal(false);
       fetchAssets();
     } catch (err) {
       console.error(err);
@@ -161,15 +163,15 @@ export default function MediaManagement() {
     setLangInput('');
     setGenreInput('');
     setTagInput('');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setShowFormModal(true);
   };
 
-  const cancelEdit = () => {
     setEditId(null);
     setFormData(initialForm);
     setLangInput('');
     setGenreInput('');
     setTagInput('');
+    setShowFormModal(false);
   };
 
   const handleDelete = async (id) => {
@@ -209,7 +211,14 @@ export default function MediaManagement() {
 
   return (
     <div className="page-container">
-      <h1 className="page-title">Media Assets</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1 className="page-title" style={{ margin: 0 }}>Media Assets</h1>
+        {userRole !== 'admin' && (
+          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => { setEditId(null); setFormData(initialForm); setShowFormModal(true); }}>
+            <PlusCircle size={18} /> Add New Media
+          </button>
+        )}
+      </div>
 
       {error && (
         <div className="error-banner">
@@ -219,429 +228,434 @@ export default function MediaManagement() {
         </div>
       )}
 
-      {userRole !== 'admin' && (
-      <div className="form-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2><PlusCircle size={20} /> {editId ? 'Edit Media Asset' : 'Add New Media'}</h2>
-          {editId && <button onClick={cancelEdit} className="btn btn-secondary"><X size={16} /> Cancel</button>}
-        </div>
-
-        <form onSubmit={handleSubmit} className="cms-form">
-          {/* Video – method selector + input + svpRefNo in one row */}
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
-            <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', minWidth: '50px' }}>Video</label>
-            <select
-              value={formData.videoMethod || 'url'}
-              onChange={(e) => setFormData({ ...formData, videoMethod: e.target.value, videoInput: '' })}
-              style={{ flex: '0 0 160px', margin: 0 }}
-            >
-              <option value="upload">Upload (SVP)</option>
-              <option value="url">Video URL</option>
-              <option value="clipId">SVP Clip ID</option>
-            </select>
-            {formData.videoMethod === 'upload' && (
-              <input type="file" accept="video/*" style={{ flex: 1, margin: 0 }}
-                onChange={(e) => setFormData({ ...formData, videoInput: e.target.files[0] })} />
-            )}
-            {formData.videoMethod === 'url' && (
-              <input type="text" placeholder="Paste video URL…" value={formData.videoInput || ''} style={{ flex: 1, margin: 0 }}
-                onChange={(e) => setFormData({ ...formData, videoInput: e.target.value })} />
-            )}
-            {formData.videoMethod === 'clipId' && (
-              <input type="text" placeholder="SVP Clip ID" value={formData.videoInput || ''} style={{ flex: 1, margin: 0 }}
-                onChange={(e) => setFormData({ ...formData, videoInput: e.target.value })} />
-            )}
-            <input type="text" placeholder="SVP Ref No (optional)" value={formData.videoSvpRefNo || ''} style={{ flex: '0 0 180px', margin: 0, fontSize: '0.85rem' }}
-              onChange={(e) => setFormData({ ...formData, videoSvpRefNo: e.target.value })} />
+      {userRole !== 'admin' && showFormModal && (
+      <div className="modal-overlay" onClick={cancelEdit}>
+        <div className="modal-content glass animate-scale-in" onClick={e => e.stopPropagation()} style={{ width: '800px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2>{editId ? 'Edit Media Asset' : 'Add New Media'}</h2>
+            <button onClick={cancelEdit} className="icon-btn"><X size={24} /></button>
           </div>
 
-          {/* Trailer – method selector + input + svpRefNo in one row */}
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
-            <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', minWidth: '50px' }}>Trailer</label>
-            <select
-              value={formData.trailerMethod || 'url'}
-              onChange={(e) => setFormData({ ...formData, trailerMethod: e.target.value, trailerInput: '' })}
-              style={{ flex: '0 0 160px', margin: 0 }}
-            >
-              <option value="upload">Upload (SVP)</option>
-              <option value="url">Trailer URL</option>
-              <option value="clipId">SVP Clip ID</option>
-            </select>
-            {formData.trailerMethod === 'upload' && (
-              <input type="file" accept="video/*" style={{ flex: 1, margin: 0 }}
-                onChange={(e) => setFormData({ ...formData, trailerInput: e.target.files[0] })} />
-            )}
-            {formData.trailerMethod === 'url' && (
-              <input type="text" placeholder="Paste trailer URL…" value={formData.trailerInput || ''} style={{ flex: 1, margin: 0 }}
-                onChange={(e) => setFormData({ ...formData, trailerInput: e.target.value })} />
-            )}
-            {formData.trailerMethod === 'clipId' && (
-              <input type="text" placeholder="SVP Clip ID" value={formData.trailerInput || ''} style={{ flex: 1, margin: 0 }}
-                onChange={(e) => setFormData({ ...formData, trailerInput: e.target.value })} />
-            )}
-            <input type="text" placeholder="SVP Ref No (optional)" value={formData.trailerSvpRefNo || ''} style={{ flex: '0 0 180px', margin: 0, fontSize: '0.85rem' }}
-              onChange={(e) => setFormData({ ...formData, trailerSvpRefNo: e.target.value })} />
-          </div>
+          <form onSubmit={handleSubmit} className="cms-form">
+            {/* Video – method selector + input + svpRefNo in one row */}
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', minWidth: '50px' }}>Video</label>
+              <select
+                value={formData.videoMethod || 'url'}
+                onChange={(e) => setFormData({ ...formData, videoMethod: e.target.value, videoInput: '' })}
+                style={{ flex: '0 0 160px', margin: 0 }}
+              >
+                <option value="upload">Upload (SVP)</option>
+                <option value="url">Video URL</option>
+                <option value="clipId">SVP Clip ID</option>
+              </select>
+              {formData.videoMethod === 'upload' && (
+                <input type="file" accept="video/*" style={{ flex: 1, margin: 0 }}
+                  onChange={(e) => setFormData({ ...formData, videoInput: e.target.files[0] })} />
+              )}
+              {formData.videoMethod === 'url' && (
+                <input type="text" placeholder="Paste video URL…" value={formData.videoInput || ''} style={{ flex: 1, margin: 0 }}
+                  onChange={(e) => setFormData({ ...formData, videoInput: e.target.value })} />
+              )}
+              {formData.videoMethod === 'clipId' && (
+                <input type="text" placeholder="SVP Clip ID" value={formData.videoInput || ''} style={{ flex: 1, margin: 0 }}
+                  onChange={(e) => setFormData({ ...formData, videoInput: e.target.value })} />
+              )}
+              <input type="text" placeholder="SVP Ref No (optional)" value={formData.videoSvpRefNo || ''} style={{ flex: '0 0 180px', margin: 0, fontSize: '0.85rem' }}
+                onChange={(e) => setFormData({ ...formData, videoSvpRefNo: e.target.value })} />
+            </div>
 
-          <div className="form-row">
-            <select value={formData.type === 'movies' ? 'movie' : formData.type === 'tvshows' ? 'tvshow' : formData.type === 'videos' ? 'video' : formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
-              <option value="movie">Movie</option>
-              <option value="tvshow">TV Show</option>
-              <option value="episode">Episode</option>
-              <option value="video">Video</option>
-            </select>
-            <input type="text" placeholder="Title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
-            <input type="text" placeholder="Subtitle" value={formData.subtitle} onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })} />
-            <input type="text" placeholder="Rating (e.g. 3+ U/A)" value={formData.rating} onChange={(e) => setFormData({ ...formData, rating: e.target.value })} />
-          </div>
+            {/* Trailer – method selector + input + svpRefNo in one row */}
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', minWidth: '50px' }}>Trailer</label>
+              <select
+                value={formData.trailerMethod || 'url'}
+                onChange={(e) => setFormData({ ...formData, trailerMethod: e.target.value, trailerInput: '' })}
+                style={{ flex: '0 0 160px', margin: 0 }}
+              >
+                <option value="upload">Upload (SVP)</option>
+                <option value="url">Trailer URL</option>
+                <option value="clipId">SVP Clip ID</option>
+              </select>
+              {formData.trailerMethod === 'upload' && (
+                <input type="file" accept="video/*" style={{ flex: 1, margin: 0 }}
+                  onChange={(e) => setFormData({ ...formData, trailerInput: e.target.files[0] })} />
+              )}
+              {formData.trailerMethod === 'url' && (
+                <input type="text" placeholder="Paste trailer URL…" value={formData.trailerInput || ''} style={{ flex: 1, margin: 0 }}
+                  onChange={(e) => setFormData({ ...formData, trailerInput: e.target.value })} />
+              )}
+              {formData.trailerMethod === 'clipId' && (
+                <input type="text" placeholder="SVP Clip ID" value={formData.trailerInput || ''} style={{ flex: 1, margin: 0 }}
+                  onChange={(e) => setFormData({ ...formData, trailerInput: e.target.value })} />
+              )}
+              <input type="text" placeholder="SVP Ref No (optional)" value={formData.trailerSvpRefNo || ''} style={{ flex: '0 0 180px', margin: 0, fontSize: '0.85rem' }}
+                onChange={(e) => setFormData({ ...formData, trailerSvpRefNo: e.target.value })} />
+            </div>
 
-          <textarea placeholder="Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required style={{ height: '70px', minHeight: '70px' }} />
+            <div className="form-row">
+              <select value={formData.type === 'movies' ? 'movie' : formData.type === 'tvshows' ? 'tvshow' : formData.type === 'videos' ? 'video' : formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
+                <option value="movie">Movie</option>
+                <option value="tvshow">TV Show</option>
+                <option value="episode">Episode</option>
+                <option value="video">Video</option>
+              </select>
+              <input type="text" placeholder="Title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
+              <input type="text" placeholder="Subtitle" value={formData.subtitle} onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })} />
+              <input type="text" placeholder="Rating (e.g. 3+ U/A)" value={formData.rating} onChange={(e) => setFormData({ ...formData, rating: e.target.value })} />
+            </div>
 
-          {formData.type === 'episode' && (
-            <div style={{ position: 'relative', marginBottom: '16px' }}>
-              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Parent TV Show Program</label>
-              <div style={{ marginTop: '8px' }}>
-                <div
-                  className="form-control"
-                  onClick={() => setShowProgramDropdown(!showProgramDropdown)}
-                  style={{
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    background: 'var(--bg-tertiary)'
-                  }}
-                >
-                  <span>{formData.programName || "Select a TV Show..."}</span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>▼</span>
-                </div>
+            <textarea placeholder="Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required style={{ height: '70px', minHeight: '70px' }} />
 
-                {showProgramDropdown && (
+            {formData.type === 'episode' && (
+              <div style={{ position: 'relative', marginBottom: '16px' }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Parent TV Show Program</label>
+                <div style={{ marginTop: '8px' }}>
                   <div
-                    className="glass"
+                    className="form-control"
+                    onClick={() => setShowProgramDropdown(!showProgramDropdown)}
                     style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      right: 0,
-                      zIndex: 100,
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '8px',
-                      marginTop: '4px',
-                      padding: '12px',
-                      boxShadow: 'var(--shadow-lg)',
-                      maxHeight: '250px',
-                      overflowY: 'auto'
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      background: 'var(--bg-tertiary)'
                     }}
                   >
-                    <input
-                      type="text"
-                      placeholder="Search TV Shows..."
-                      value={programSearch}
-                      onChange={(e) => setProgramSearch(e.target.value)}
-                      className="dropdown-search-input"
-                      onClick={(e) => e.stopPropagation()}
-                      autoFocus
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div
-                        style={{
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          borderRadius: '4px',
-                          color: 'var(--text-secondary)',
-                          transition: 'background 0.25s'
-                        }}
-                        onClick={() => {
-                          setFormData({ ...formData, programId: '', programName: '' });
-                          setShowProgramDropdown(false);
-                          setProgramSearch('');
-                        }}
-                      >
-                        -- Clear Selection --
-                      </div>
-                      {tvShowsList
-                        .filter(show => show.title.toLowerCase().includes(programSearch.toLowerCase()))
-                        .map(show => (
-                          <div
-                            key={show._id}
-                            style={{
-                              padding: '8px 12px',
-                              cursor: 'pointer',
-                              borderRadius: '4px',
-                              background: formData.programId === show._id ? 'var(--accent-primary)' : 'transparent',
-                              color: formData.programId === show._id ? 'white' : 'var(--text-primary)',
-                              transition: 'background 0.25s'
-                            }}
-                            onClick={() => {
-                              setFormData({
-                                ...formData,
-                                programId: show._id,
-                                programName: show.title
-                              });
-                              setShowProgramDropdown(false);
-                              setProgramSearch('');
-                            }}
-                          >
-                            {show.title}
-                          </div>
-                        ))
-                      }
-                      {tvShowsList.filter(show => show.title.toLowerCase().includes(programSearch.toLowerCase())).length === 0 && (
-                        <div style={{ padding: '8px 12px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                          No TV Shows found.
-                        </div>
-                      )}
-                    </div>
+                    <span>{formData.programName || "Select a TV Show..."}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>▼</span>
                   </div>
-                )}
-              </div>
-            </div>
-          )}
 
-
-
-          <div className="form-row" style={{ alignItems: 'flex-start', marginBottom: '8px' }}>
-            {/* Languages Chips UI */}
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Languages</label>
-              <div className="chips-input-container" style={{ marginTop: '8px' }}>
-                {formData.languages.map((lang, index) => (
-                  <span key={index} className="chip">
-                    {lang}
-                    <button
-                      type="button"
-                      className="chip-remove-btn"
-                      onClick={() => {
-                        const newL = formData.languages.filter((_, i) => i !== index);
-                        setFormData({ ...formData, languages: newL });
+                  {showProgramDropdown && (
+                    <div
+                      className="glass"
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        zIndex: 100,
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        marginTop: '4px',
+                        padding: '12px',
+                        boxShadow: 'var(--shadow-lg)',
+                        maxHeight: '250px',
+                        overflowY: 'auto'
                       }}
                     >
-                      <X size={14} />
-                    </button>
-                  </span>
-                ))}
-                <input
-                  type="text"
-                  placeholder={formData.languages.length === 0 ? "Type language & press Enter" : ""}
-                  value={langInput}
-                  onChange={(e) => setLangInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (langInput.trim()) {
+                      <input
+                        type="text"
+                        placeholder="Search TV Shows..."
+                        value={programSearch}
+                        onChange={(e) => setProgramSearch(e.target.value)}
+                        className="dropdown-search-input"
+                        onClick={(e) => e.stopPropagation()}
+                        autoFocus
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div
+                          style={{
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                            borderRadius: '4px',
+                            color: 'var(--text-secondary)',
+                            transition: 'background 0.25s'
+                          }}
+                          onClick={() => {
+                            setFormData({ ...formData, programId: '', programName: '' });
+                            setShowProgramDropdown(false);
+                            setProgramSearch('');
+                          }}
+                        >
+                          -- Clear Selection --
+                        </div>
+                        {tvShowsList
+                          .filter(show => show.title.toLowerCase().includes(programSearch.toLowerCase()))
+                          .map(show => (
+                            <div
+                              key={show._id}
+                              style={{
+                                padding: '8px 12px',
+                                cursor: 'pointer',
+                                borderRadius: '4px',
+                                background: formData.programId === show._id ? 'var(--accent-primary)' : 'transparent',
+                                color: formData.programId === show._id ? 'white' : 'var(--text-primary)',
+                                transition: 'background 0.25s'
+                              }}
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  programId: show._id,
+                                  programName: show.title
+                                });
+                                setShowProgramDropdown(false);
+                                setProgramSearch('');
+                              }}
+                            >
+                              {show.title}
+                            </div>
+                          ))
+                        }
+                        {tvShowsList.filter(show => show.title.toLowerCase().includes(programSearch.toLowerCase())).length === 0 && (
+                          <div style={{ padding: '8px 12px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                            No TV Shows found.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+
+
+            <div className="form-row" style={{ alignItems: 'flex-start', marginBottom: '8px' }}>
+              {/* Languages Chips UI */}
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Languages</label>
+                <div className="chips-input-container" style={{ marginTop: '8px' }}>
+                  {formData.languages.map((lang, index) => (
+                    <span key={index} className="chip">
+                      {lang}
+                      <button
+                        type="button"
+                        className="chip-remove-btn"
+                        onClick={() => {
+                          const newL = formData.languages.filter((_, i) => i !== index);
+                          setFormData({ ...formData, languages: newL });
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    type="text"
+                    placeholder={formData.languages.length === 0 ? "Type language & press Enter" : ""}
+                    value={langInput}
+                    onChange={(e) => setLangInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (langInput.trim()) {
+                          if (!formData.languages.includes(langInput.trim())) {
+                            setFormData({ ...formData, languages: [...formData.languages, langInput.trim()] });
+                          }
+                          setLangInput('');
+                        }
+                      }
+                    }}
+                    className="chips-input"
+                  />
+                  {langInput.trim() && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
                         if (!formData.languages.includes(langInput.trim())) {
                           setFormData({ ...formData, languages: [...formData.languages, langInput.trim()] });
                         }
                         setLangInput('');
-                      }
-                    }
-                  }}
-                  className="chips-input"
-                />
-                {langInput.trim() && (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      if (!formData.languages.includes(langInput.trim())) {
-                        setFormData({ ...formData, languages: [...formData.languages, langInput.trim()] });
-                      }
-                      setLangInput('');
-                    }}
-                    style={{ padding: '2px 8px', height: '28px', fontSize: '0.8rem', borderRadius: '4px' }}
-                  >
-                    + Add
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Images Input URLs */}
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Image URLs</label>
-              {formData.images.map((img, index) => (
-                <div key={index} style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-                  <input type="text" placeholder={`Image URL ${index + 1}`} value={img} onChange={(e) => {
-                    const newI = [...formData.images];
-                    newI[index] = e.target.value;
-                    setFormData({ ...formData, images: newI });
-                  }} style={{ margin: 0 }} />
-
-                  {index === formData.images.length - 1 ? (
-                    <button type="button" className="btn btn-secondary" onClick={() => setFormData({ ...formData, images: [...formData.images, ''] })} style={{ padding: '0 15px', height: '42px' }}>
+                      }}
+                      style={{ padding: '2px 8px', height: '28px', fontSize: '0.8rem', borderRadius: '4px' }}
+                    >
                       + Add
-                    </button>
-                  ) : (
-                    <button type="button" className="icon-btn delete" onClick={() => {
-                      const newI = formData.images.filter((_, i) => i !== index);
-                      setFormData({ ...formData, images: newI });
-                    }} style={{ height: '42px' }}>
-                      <Trash2 size={20} />
                     </button>
                   )}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          <div className="form-row" style={{ alignItems: 'flex-start', marginBottom: '8px' }}>
-            {/* Genres Chips UI */}
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Genres</label>
-              <div className="chips-input-container" style={{ marginTop: '8px' }}>
-                {formData.genres.map((genre, index) => (
-                  <span key={index} className="chip">
-                    {genre}
+              {/* Images Input URLs */}
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Image URLs</label>
+                {formData.images.map((img, index) => (
+                  <div key={index} style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                    <input type="text" placeholder={`Image URL ${index + 1}`} value={img} onChange={(e) => {
+                      const newI = [...formData.images];
+                      newI[index] = e.target.value;
+                      setFormData({ ...formData, images: newI });
+                    }} style={{ margin: 0 }} />
+
+                    {index === formData.images.length - 1 ? (
+                      <button type="button" className="btn btn-secondary" onClick={() => setFormData({ ...formData, images: [...formData.images, ''] })} style={{ padding: '0 15px', height: '42px' }}>
+                        + Add
+                      </button>
+                    ) : (
+                      <button type="button" className="icon-btn delete" onClick={() => {
+                        const newI = formData.images.filter((_, i) => i !== index);
+                        setFormData({ ...formData, images: newI });
+                      }} style={{ height: '42px' }}>
+                        <Trash2 size={20} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="form-row" style={{ alignItems: 'flex-start', marginBottom: '8px' }}>
+              {/* Genres Chips UI */}
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Genres</label>
+                <div className="chips-input-container" style={{ marginTop: '8px' }}>
+                  {formData.genres.map((genre, index) => (
+                    <span key={index} className="chip">
+                      {genre}
+                      <button
+                        type="button"
+                        className="chip-remove-btn"
+                        onClick={() => {
+                          const newG = formData.genres.filter((_, i) => i !== index);
+                          setFormData({ ...formData, genres: newG });
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    type="text"
+                    placeholder={formData.genres.length === 0 ? "Type genre & press Enter" : ""}
+                    value={genreInput}
+                    onChange={(e) => setGenreInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (genreInput.trim()) {
+                          if (!formData.genres.includes(genreInput.trim())) {
+                            setFormData({ ...formData, genres: [...formData.genres, genreInput.trim()] });
+                          }
+                          setGenreInput('');
+                        }
+                      }
+                    }}
+                    className="chips-input"
+                  />
+                  {genreInput.trim() && (
                     <button
                       type="button"
-                      className="chip-remove-btn"
+                      className="btn btn-secondary"
                       onClick={() => {
-                        const newG = formData.genres.filter((_, i) => i !== index);
-                        setFormData({ ...formData, genres: newG });
-                      }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </span>
-                ))}
-                <input
-                  type="text"
-                  placeholder={formData.genres.length === 0 ? "Type genre & press Enter" : ""}
-                  value={genreInput}
-                  onChange={(e) => setGenreInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (genreInput.trim()) {
                         if (!formData.genres.includes(genreInput.trim())) {
                           setFormData({ ...formData, genres: [...formData.genres, genreInput.trim()] });
                         }
                         setGenreInput('');
-                      }
-                    }
-                  }}
-                  className="chips-input"
-                />
-                {genreInput.trim() && (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      if (!formData.genres.includes(genreInput.trim())) {
-                        setFormData({ ...formData, genres: [...formData.genres, genreInput.trim()] });
-                      }
-                      setGenreInput('');
-                    }}
-                    style={{ padding: '2px 8px', height: '28px', fontSize: '0.8rem', borderRadius: '4px' }}
-                  >
-                    + Add
-                  </button>
-                )}
+                      }}
+                      style={{ padding: '2px 8px', height: '28px', fontSize: '0.8rem', borderRadius: '4px' }}
+                    >
+                      + Add
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Tags Chips UI */}
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Tags</label>
-              <div className="chips-input-container" style={{ marginTop: '8px' }}>
-                {formData.tags.map((tag, index) => (
-                  <span key={index} className="chip">
-                    {tag}
+              {/* Tags Chips UI */}
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Tags</label>
+                <div className="chips-input-container" style={{ marginTop: '8px' }}>
+                  {formData.tags.map((tag, index) => (
+                    <span key={index} className="chip">
+                      {tag}
+                      <button
+                        type="button"
+                        className="chip-remove-btn"
+                        onClick={() => {
+                          const newT = formData.tags.filter((_, i) => i !== index);
+                          setFormData({ ...formData, tags: newT });
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    type="text"
+                    placeholder={formData.tags.length === 0 ? "Type tag & press Enter" : ""}
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (tagInput.trim()) {
+                          if (!formData.tags.includes(tagInput.trim())) {
+                            setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
+                          }
+                          setTagInput('');
+                        }
+                      }
+                    }}
+                    className="chips-input"
+                  />
+                  {tagInput.trim() && (
                     <button
                       type="button"
-                      className="chip-remove-btn"
+                      className="btn btn-secondary"
                       onClick={() => {
-                        const newT = formData.tags.filter((_, i) => i !== index);
-                        setFormData({ ...formData, tags: newT });
-                      }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </span>
-                ))}
-                <input
-                  type="text"
-                  placeholder={formData.tags.length === 0 ? "Type tag & press Enter" : ""}
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (tagInput.trim()) {
                         if (!formData.tags.includes(tagInput.trim())) {
                           setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
                         }
                         setTagInput('');
-                      }
-                    }
-                  }}
-                  className="chips-input"
-                />
-                {tagInput.trim() && (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      if (!formData.tags.includes(tagInput.trim())) {
-                        setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
-                      }
-                      setTagInput('');
-                    }}
-                    style={{ padding: '2px 8px', height: '28px', fontSize: '0.8rem', borderRadius: '4px' }}
-                  >
-                    + Add
-                  </button>
-                )}
+                      }}
+                      style={{ padding: '2px 8px', height: '28px', fontSize: '0.8rem', borderRadius: '4px' }}
+                    >
+                      + Add
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Membership Level (Required Plans)</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px' }}>
-              {plans.map(plan => {
-                const isSelected = formData.membership_level.some(m => m.planId === plan._id);
-                return (
-                  <button
-                    key={plan._id}
-                    type="button"
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '20px',
-                      border: `1px solid ${isSelected ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                      background: isSelected ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
-                      color: isSelected ? 'white' : 'var(--text-primary)',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontWeight: isSelected ? 600 : 400,
-                      transition: 'all 0.3s ease'
-                    }}
-                    onClick={() => {
-                      if (isSelected) {
-                        setFormData({
-                          ...formData,
-                          membership_level: formData.membership_level.filter(m => m.planId !== plan._id)
-                        });
-                      } else {
-                        setFormData({
-                          ...formData,
-                          membership_level: [...formData.membership_level, { planId: plan._id, planName: plan.name }]
-                        });
-                      }
-                    }}
-                  >
-                    {plan.name}
-                  </button>
-                )
-              })}
-              {plans.length === 0 && <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No plans available.</span>}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Membership Level (Required Plans)</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px' }}>
+                {plans.map(plan => {
+                  const isSelected = formData.membership_level.some(m => m.planId === plan._id);
+                  return (
+                    <button
+                      key={plan._id}
+                      type="button"
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '20px',
+                        border: `1px solid ${isSelected ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                        background: isSelected ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
+                        color: isSelected ? 'white' : 'var(--text-primary)',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        fontWeight: isSelected ? 600 : 400,
+                        transition: 'all 0.3s ease'
+                      }}
+                      onClick={() => {
+                        if (isSelected) {
+                          setFormData({
+                            ...formData,
+                            membership_level: formData.membership_level.filter(m => m.planId !== plan._id)
+                          });
+                        } else {
+                          setFormData({
+                            ...formData,
+                            membership_level: [...formData.membership_level, { planId: plan._id, planName: plan.name }]
+                          });
+                        }
+                      }}
+                    >
+                      {plan.name}
+                    </button>
+                  )
+                })}
+                {plans.length === 0 && <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No plans available.</span>}
+              </div>
             </div>
-          </div>
 
-          <button type="submit" className="primary-btn">{editId ? 'Update Media' : 'Save Media'}</button>
-        </form>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              <button type="button" className="btn btn-secondary" onClick={cancelEdit}>Cancel</button>
+              <button type="submit" className="btn btn-primary">{editId ? 'Update Media' : 'Save Media'}</button>
+            </div>
+          </form>
+        </div>
       </div>
       )}
 

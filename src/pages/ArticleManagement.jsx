@@ -7,6 +7,7 @@ export default function ArticleManagement() {
   const [articles, setArticles] = useState([]);
   const [search, setSearch] = useState('');
   const [editId, setEditId] = useState(null);
+  const [showFormModal, setShowFormModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -66,6 +67,7 @@ export default function ArticleManagement() {
 
       setFormData(initialForm);
       setEditId(null);
+      setShowFormModal(false);
       fetchArticles();
     } catch (err) {
       console.error(err);
@@ -83,12 +85,13 @@ export default function ArticleManagement() {
       videoUrl: article.videoUrl || '',
       keywords: article.keywords && article.keywords.length > 0 ? article.keywords : ['']
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setShowFormModal(true);
   };
 
   const cancelEdit = () => {
     setEditId(null);
     setFormData(initialForm);
+    setShowFormModal(false);
   };
 
   const handleDelete = async (id) => {
@@ -113,7 +116,14 @@ export default function ArticleManagement() {
 
   return (
     <div className="page-container">
-      <h1 className="page-title">Articles & News</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1 className="page-title" style={{ margin: 0 }}>Articles & News</h1>
+        {userRole !== 'admin' && (
+          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => { setEditId(null); setFormData(initialForm); setShowFormModal(true); }}>
+            <PlusCircle size={18} /> Draft New Article
+          </button>
+        )}
+      </div>
 
       {error && (
         <div className="error-banner">
@@ -123,52 +133,57 @@ export default function ArticleManagement() {
         </div>
       )}
 
-      {userRole !== 'admin' && (
-      <div className="form-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2><PlusCircle size={20} /> {editId ? 'Edit Article' : 'Draft New Article'}</h2>
-          {editId && <button onClick={cancelEdit} className="btn btn-secondary"><X size={16} /> Cancel</button>}
-        </div>
-
-        <form onSubmit={handleSubmit} className="cms-form">
-          <input type="text" placeholder="Title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
-          <input type="text" placeholder="Subtitle" value={formData.subtitle} onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })} />
-
-          <div className="form-row">
-            <input type="text" placeholder="Image URL" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} />
-            <input type="text" placeholder="Video URL" value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} />
+      {userRole !== 'admin' && showFormModal && (
+      <div className="modal-overlay" onClick={cancelEdit}>
+        <div className="modal-content glass animate-scale-in" onClick={e => e.stopPropagation()} style={{ width: '700px', maxWidth: '90vw' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2>{editId ? 'Edit Article' : 'Draft New Article'}</h2>
+            <button onClick={cancelEdit} className="icon-btn"><X size={24} /></button>
           </div>
 
-          <textarea placeholder="Article Content / Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required rows="5" />
+          <form onSubmit={handleSubmit} className="cms-form">
+            <input type="text" placeholder="Title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
+            <input type="text" placeholder="Subtitle" value={formData.subtitle} onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })} />
 
-          <div style={{ marginBottom: '8px' }}>
-            <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Keywords</label>
-            {formData.keywords.map((keyword, index) => (
-              <div key={index} style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-                <input type="text" placeholder={`Keyword ${index + 1}`} value={keyword} onChange={(e) => {
-                  const newK = [...formData.keywords];
-                  newK[index] = e.target.value;
-                  setFormData({ ...formData, keywords: newK });
-                }} />
+            <div className="form-row">
+              <input type="text" placeholder="Image URL" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} />
+              <input type="text" placeholder="Video URL" value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} />
+            </div>
 
-                {index === formData.keywords.length - 1 ? (
-                  <button type="button" className="btn btn-secondary" onClick={() => setFormData({ ...formData, keywords: [...formData.keywords, ''] })}>
-                    + Add
-                  </button>
-                ) : (
-                  <button type="button" className="icon-btn delete" onClick={() => {
-                    const newK = formData.keywords.filter((_, i) => i !== index);
+            <textarea placeholder="Article Content / Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required rows="5" />
+
+            <div style={{ marginBottom: '8px' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Keywords</label>
+              {formData.keywords.map((keyword, index) => (
+                <div key={index} style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                  <input type="text" placeholder={`Keyword ${index + 1}`} value={keyword} onChange={(e) => {
+                    const newK = [...formData.keywords];
+                    newK[index] = e.target.value;
                     setFormData({ ...formData, keywords: newK });
-                  }}>
-                    <Trash2 size={20} />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+                  }} />
 
-          <button type="submit" className="primary-btn">{editId ? 'Update Article' : 'Publish Article'}</button>
-        </form>
+                  {index === formData.keywords.length - 1 ? (
+                    <button type="button" className="btn btn-secondary" onClick={() => setFormData({ ...formData, keywords: [...formData.keywords, ''] })}>
+                      + Add
+                    </button>
+                  ) : (
+                    <button type="button" className="icon-btn delete" onClick={() => {
+                      const newK = formData.keywords.filter((_, i) => i !== index);
+                      setFormData({ ...formData, keywords: newK });
+                    }}>
+                      <Trash2 size={20} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              <button type="button" className="btn btn-secondary" onClick={cancelEdit}>Cancel</button>
+              <button type="submit" className="btn btn-primary">{editId ? 'Update Article' : 'Publish Article'}</button>
+            </div>
+          </form>
+        </div>
       </div>
       )}
 

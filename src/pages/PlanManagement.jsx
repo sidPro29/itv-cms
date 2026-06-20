@@ -7,6 +7,7 @@ export default function PlanManagement() {
   const [plans, setPlans] = useState([]);
   const [search, setSearch] = useState('');
   const [editId, setEditId] = useState(null);
+  const [showFormModal, setShowFormModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -66,6 +67,7 @@ export default function PlanManagement() {
 
       setFormData(initialForm);
       setEditId(null);
+      setShowFormModal(false);
       fetchPlans();
     } catch (err) {
       console.error(err);
@@ -81,12 +83,13 @@ export default function PlanManagement() {
       type: plan.type,
       benefits: plan.benefits && plan.benefits.length > 0 ? plan.benefits : ['']
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setShowFormModal(true);
   };
 
   const cancelEdit = () => {
     setEditId(null);
     setFormData(initialForm);
+    setShowFormModal(false);
   };
 
   const handleDelete = async (id) => {
@@ -111,7 +114,14 @@ export default function PlanManagement() {
 
   return (
     <div className="page-container">
-      <h1 className="page-title">Subscription Plans</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1 className="page-title" style={{ margin: 0 }}>Subscription Plans</h1>
+        {userRole !== 'admin' && (
+          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => { setEditId(null); setFormData(initialForm); setShowFormModal(true); }}>
+            <PlusCircle size={18} /> Create New Plan
+          </button>
+        )}
+      </div>
 
       {error && (
         <div className="error-banner">
@@ -121,49 +131,54 @@ export default function PlanManagement() {
         </div>
       )}
 
-      {userRole !== 'admin' && (
-      <div className="form-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2><PlusCircle size={20} /> {editId ? 'Edit Plan' : 'Create New Plan'}</h2>
-          {editId && <button onClick={cancelEdit} className="btn btn-secondary"><X size={16} /> Cancel</button>}
-        </div>
-
-        <form onSubmit={handleSubmit} className="cms-form">
-          <div className="form-row">
-            <input type="text" placeholder="Plan Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-            <input type="number" placeholder="Amount (USD)" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required />
-            <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
-              <option value="regular">Regular</option>
-              <option value="adsPlan">Ads Plan</option>
-            </select>
+      {userRole !== 'admin' && showFormModal && (
+      <div className="modal-overlay" onClick={cancelEdit}>
+        <div className="modal-content glass animate-scale-in" onClick={e => e.stopPropagation()} style={{ width: '600px', maxWidth: '90vw' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2>{editId ? 'Edit Plan' : 'Create New Plan'}</h2>
+            <button onClick={cancelEdit} className="icon-btn"><X size={24} /></button>
           </div>
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Plan Benefits</label>
-            {formData.benefits.map((benefit, index) => (
-              <div key={index} style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-                <input type="text" placeholder={`Benefit ${index + 1}`} value={benefit} onChange={(e) => {
-                  const newB = [...formData.benefits];
-                  newB[index] = e.target.value;
-                  setFormData({ ...formData, benefits: newB });
-                }} required={index === 0} />
 
-                {index === formData.benefits.length - 1 ? (
-                  <button type="button" className="btn btn-secondary" onClick={() => setFormData({ ...formData, benefits: [...formData.benefits, ''] })}>
-                    + Add
-                  </button>
-                ) : (
-                  <button type="button" className="icon-btn delete" onClick={() => {
-                    const newB = formData.benefits.filter((_, i) => i !== index);
+          <form onSubmit={handleSubmit} className="cms-form">
+            <div className="form-row">
+              <input type="text" placeholder="Plan Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+              <input type="number" placeholder="Amount (USD)" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required />
+              <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
+                <option value="regular">Regular</option>
+                <option value="adsPlan">Ads Plan</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Plan Benefits</label>
+              {formData.benefits.map((benefit, index) => (
+                <div key={index} style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                  <input type="text" placeholder={`Benefit ${index + 1}`} value={benefit} onChange={(e) => {
+                    const newB = [...formData.benefits];
+                    newB[index] = e.target.value;
                     setFormData({ ...formData, benefits: newB });
-                  }}>
-                    <Trash2 size={20} />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          <button type="submit" className="primary-btn">{editId ? 'Update Plan' : 'Save Plan'}</button>
-        </form>
+                  }} required={index === 0} />
+
+                  {index === formData.benefits.length - 1 ? (
+                    <button type="button" className="btn btn-secondary" onClick={() => setFormData({ ...formData, benefits: [...formData.benefits, ''] })}>
+                      + Add
+                    </button>
+                  ) : (
+                    <button type="button" className="icon-btn delete" onClick={() => {
+                      const newB = formData.benefits.filter((_, i) => i !== index);
+                      setFormData({ ...formData, benefits: newB });
+                    }}>
+                      <Trash2 size={20} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              <button type="button" className="btn btn-secondary" onClick={cancelEdit}>Cancel</button>
+              <button type="submit" className="btn btn-primary">{editId ? 'Update Plan' : 'Save Plan'}</button>
+            </div>
+          </form>
+        </div>
       </div>
       )}
 
