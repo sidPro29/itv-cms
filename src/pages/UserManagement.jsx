@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserCheck, ShieldAlert, Edit2, X, Save, AlertTriangle, Send, Loader2, Trash2 } from 'lucide-react';
+import { Users, UserCheck, ShieldAlert, Edit2, X, Save, AlertTriangle, Send, Loader2, Trash2, Plus } from 'lucide-react';
 import { getUserRole } from '../utils/auth';
 
 export default function UserManagement() {
   const userRole = getUserRole();
   const [users, setUsers] = useState([]);
+  const [availablePlans, setAvailablePlans] = useState([]);
   const [metrics, setMetrics] = useState({ total: 0, activePlans: 0, admins: 0 });
   const [editingUserId, setEditingUserId] = useState(null);
   const [editData, setEditData] = useState({});
@@ -59,7 +60,40 @@ export default function UserManagement() {
 
   useEffect(() => {
     fetchUsers();
+    fetchPlans();
   }, []);
+
+  const fetchPlans = async () => {
+    try {
+      const res = await fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/plans');
+      if (res.ok) {
+        const data = await res.json();
+        setAvailablePlans(data);
+      }
+    } catch (err) {
+      console.error('Error fetching plans:', err);
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/users/${id}`, {
+          method: 'DELETE',
+          headers: { 'x-auth-token': token }
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.msg || 'Failed to delete user');
+        }
+        alert('User deleted successfully');
+        fetchUsers();
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -99,7 +133,8 @@ export default function UserManagement() {
       username: user.username,
       email: user.email,
       mobile: user.mobile || '',
-      role: user.role
+      role: user.role,
+      activePlans: [...(user.activePlans || [])]
     });
   };
 
@@ -238,9 +273,48 @@ export default function UserManagement() {
                     ) : <span className="badge">{user.role}</span>}
                   </td>
                   <td style={{ padding: '12px' }}>
-                    {user.activePlans && user.activePlans.length > 0 ? (
-                      user.activePlans.map((p, i) => <span key={i} className="badge">{p.planName}</span>)
-                    ) : '-'}
+                    {editingUserId === user._id ? (
+                      <div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                          {editData.activePlans.map((p, i) => (
+                            <span key={i} className="badge" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              {p.planName}
+                              <X size={12} style={{ cursor: 'pointer' }} onClick={() => {
+                                const newPlans = [...editData.activePlans];
+                                newPlans.splice(i, 1);
+                                setEditData({...editData, activePlans: newPlans});
+                              }}/>
+                            </span>
+                          ))}
+                        </div>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <select id={`plan-select-${user._id}`} className="form-control" style={{ padding: '4px', fontSize: '0.8rem' }}>
+                            <option value="">Select Plan...</option>
+                            {availablePlans.map(plan => (
+                              <option key={plan._id} value={plan._id}>{plan.name}</option>
+                            ))}
+                          </select>
+                          <button className="icon-btn" style={{ padding: '4px' }} onClick={(e) => {
+                            e.preventDefault();
+                            const selectEl = document.getElementById(`plan-select-${user._id}`);
+                            const selectedPlanId = selectEl.value;
+                            if (selectedPlanId) {
+                              const planDetails = availablePlans.find(p => p._id === selectedPlanId);
+                              if (planDetails && !editData.activePlans.find(p => p.planId === planDetails._id)) {
+                                setEditData({
+                                  ...editData,
+                                  activePlans: [...editData.activePlans, { planId: planDetails._id, planName: planDetails.name, expiryDate: new Date(Date.now() + planDetails.durationInDays * 24 * 60 * 60 * 1000) }]
+                                });
+                              }
+                            }
+                          }}><Plus size={16} /></button>
+                        </div>
+                      </div>
+                    ) : (
+                      user.activePlans && user.activePlans.length > 0 ? (
+                        user.activePlans.map((p, i) => <span key={i} className="badge">{p.planName}</span>)
+                      ) : '-'
+                    )}
                   </td>
                   {userRole === 'superAdmin' && (
                   <td style={{ padding: '12px' }}>
@@ -250,7 +324,10 @@ export default function UserManagement() {
                         <button className="icon-btn delete" onClick={() => setEditingUserId(null)}><X size={18} /></button>
                       </div>
                     ) : (
-                      <button className="icon-btn" onClick={() => handleEditClick(user)}><Edit2 size={18} /></button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="icon-btn" onClick={() => handleEditClick(user)}><Edit2 size={18} /></button>
+                        <button className="icon-btn delete" onClick={() => handleDeleteUser(user._id)}><Trash2 size={18} /></button>
+                      </div>
                     )}
                   </td>
                   )}
