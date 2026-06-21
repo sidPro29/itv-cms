@@ -81,13 +81,15 @@ const Navbar = ({ setIsAuthenticated }) => {
       <div className="sidebar-footer" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         {userProfile && (
           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
-            <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {userProfile.username || 'Admin'}
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {userProfile.email}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {userProfile.email || 're-login to sync'}
+              </div>
+              <span className="badge" style={{ fontSize: '0.65rem', padding: '2px 6px' }}>{userProfile.role}</span>
             </div>
-            <span className="badge" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{userProfile.role}</span>
           </div>
         )}
         <div style={{ display: 'flex', gap: '10px' }}>
