@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserCheck, ShieldAlert, Edit2, X, Save, AlertTriangle, Send, Loader2, Trash2, Plus } from 'lucide-react';
-import { getUserRole } from '../utils/auth';
+import { getUserRole, getUserId } from '../utils/auth';
 
 export default function UserManagement() {
   const userRole = getUserRole();
+  const currentUserId = getUserId();
   const [users, setUsers] = useState([]);
   const [availablePlans, setAvailablePlans] = useState([]);
   const [metrics, setMetrics] = useState({ total: 0, activePlans: 0, admins: 0 });
@@ -265,7 +266,9 @@ export default function UserManagement() {
                   <td style={{ padding: '12px' }}>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button className="icon-btn" onClick={() => handleEditClick(user)}><Edit2 size={18} /></button>
-                      <button className="icon-btn delete" onClick={() => handleDeleteUser(user._id)}><Trash2 size={18} /></button>
+                      {user._id !== currentUserId && (
+                        <button className="icon-btn delete" onClick={() => handleDeleteUser(user._id)}><Trash2 size={18} /></button>
+                      )}
                     </div>
                   </td>
                   )}
@@ -331,9 +334,11 @@ export default function UserManagement() {
                       <td style={{ padding: '10px' }}>{u.email}</td>
                       <td style={{ padding: '10px' }}><span className="badge">{u.role}</span></td>
                       <td style={{ padding: '10px' }}>
-                        <button className="icon-btn delete" onClick={() => handleDeleteCmsUser(u._id)}>
-                          <Trash2 size={18} />
-                        </button>
+                        {u._id !== currentUserId && (
+                          <button className="icon-btn delete" onClick={() => handleDeleteCmsUser(u._id)}>
+                            <Trash2 size={18} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
