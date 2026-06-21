@@ -331,7 +331,10 @@ export default function UserManagement() {
                 <tbody>
                   {users.filter(u => ['admin', 'superAdmin'].includes(u.role)).map(u => (
                     <tr key={u._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <td style={{ padding: '10px' }}>{u.email}</td>
+                      <td style={{ padding: '10px' }}>
+                        {u.mustChangePassword && <span style={{ fontSize: '0.7rem', backgroundColor: '#f39c12', color: '#fff', padding: '2px 6px', borderRadius: '4px', marginRight: '8px', fontWeight: 'bold' }}>Pending</span>}
+                        {u.email}
+                      </td>
                       <td style={{ padding: '10px' }}><span className="badge">{u.role}</span></td>
                       <td style={{ padding: '10px' }}>
                         {u._id !== currentUserId && (
