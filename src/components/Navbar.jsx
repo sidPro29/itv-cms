@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Film, FileText, Tag, Users, LogOut, Sun, Moon, CreditCard, BarChart2 } from 'lucide-react';
+import { getUserProfile } from '../utils/auth';
 
 const Navbar = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const userProfile = getUserProfile();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -76,13 +78,26 @@ const Navbar = ({ setIsAuthenticated }) => {
           </Link>
         </li>
       </ul>
-      <div className="sidebar-footer" style={{ display: 'flex', gap: '10px' }}>
-        <button className="btn btn-secondary" onClick={toggleTheme} style={{ flex: 1, padding: '10px' }}>
-          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
-        <button className="btn btn-secondary" onClick={handleLogout} style={{ flex: 2 }}>
-          <LogOut size={18} /> Logout
-        </button>
+      <div className="sidebar-footer" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        {userProfile && (
+          <div style={{ background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {userProfile.username || 'Admin'}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {userProfile.email}
+            </div>
+            <span className="badge" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{userProfile.role}</span>
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn btn-secondary" onClick={toggleTheme} style={{ flex: 1, padding: '10px' }}>
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+          <button className="btn btn-secondary" onClick={handleLogout} style={{ flex: 2 }}>
+            <LogOut size={18} /> Logout
+          </button>
+        </div>
       </div>
     </nav>
   );
