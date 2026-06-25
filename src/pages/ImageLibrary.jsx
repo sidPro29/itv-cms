@@ -12,7 +12,8 @@ const ImageLibrary = () => {
   const fetchImages = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/images');
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api';
+      const response = await fetch(`${baseUrl}/images`);
       if (!response.ok) throw new Error('Failed to fetch images');
       const data = await response.json();
       setImages(data.images || []);
@@ -43,7 +44,8 @@ const ImageLibrary = () => {
     try {
       setUploading(true);
       setError('');
-      const response = await fetch('/api/upload', {
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api';
+      const response = await fetch(`${baseUrl}/upload`, {
         method: 'POST',
         body: formData
       });

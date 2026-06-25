@@ -78,7 +78,8 @@ export default function MediaManagement() {
     
     try {
       setUploadingImageIndex(index);
-      const res = await fetch('/api/upload', { method: 'POST', body: formDataObj });
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api';
+      const res = await fetch(`${baseUrl}/upload`, { method: 'POST', body: formDataObj });
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
       if (data.success) {

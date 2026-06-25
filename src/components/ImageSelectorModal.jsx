@@ -26,7 +26,8 @@ const ImageSelectorModal = ({ isOpen, onClose, onSelect }) => {
   const fetchImages = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/images');
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api';
+      const response = await fetch(`${baseUrl}/images`);
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       setImages(data.images || []);
