@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Newspaper, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
+import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Newspaper, Image as ImageIcon, Upload, Loader2, ExternalLink } from 'lucide-react';
 import { getUserRole } from '../utils/auth';
 import ImageSelectorModal from '../components/ImageSelectorModal';
 
@@ -259,6 +259,7 @@ export default function ArticleManagement() {
               <th style={{ padding: '12px' }}>Title</th>
               <th style={{ padding: '12px' }}>Keywords</th>
               <th style={{ padding: '12px' }}>Date</th>
+              <th style={{ padding: '12px', width: '80px' }}>Preview</th>
               {userRole !== 'admin' && <th style={{ padding: '12px' }}>Actions</th>}
             </tr>
           </thead>
@@ -271,6 +272,7 @@ export default function ArticleManagement() {
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '100px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '40px' }}></div></td>
+                  {userRole !== 'admin' && <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '40px' }}></div></td>}
                 </tr>
               ))
             ) : (
@@ -293,6 +295,18 @@ export default function ArticleManagement() {
                   <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                     {new Date(article.createdAt).toLocaleDateString()}
                   </td>
+                  <td style={{ padding: '12px' }}>
+                    <a 
+                      href={`${import.meta.env.VITE_WEB_URL || 'https://interplanetary.tv'}/news/${article._id}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="icon-btn"
+                      title="Preview Article on ITV Web"
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color, #a855f7)' }}
+                    >
+                      <ExternalLink size={18} />
+                    </a>
+                  </td>
                   {userRole !== 'admin' && (
                   <td style={{ padding: '12px' }}>
                     <button className="icon-btn" onClick={() => handleEdit(article)}><Edit2 size={18} /></button>
@@ -304,7 +318,7 @@ export default function ArticleManagement() {
             )}
             {!loading && filteredArticles.length === 0 && (
               <tr>
-                <td colSpan="4" style={{ padding: '0' }}>
+                <td colSpan="6" style={{ padding: '0' }}>
                   <div className="empty-state">
                     <Newspaper size={48} className="empty-state-icon" />
                     <p style={{ fontWeight: '500', fontSize: '1.1rem', marginBottom: '8px' }}>No Articles Found</p>

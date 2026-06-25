@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Film, Tv, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
+import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Film, Tv, Image as ImageIcon, Upload, Loader2, ExternalLink } from 'lucide-react';
 import { getUserRole } from '../utils/auth';
 import ImageSelectorModal from '../components/ImageSelectorModal';
 
@@ -776,6 +776,7 @@ export default function MediaManagement() {
               <th style={{ padding: '12px' }}>Type</th>
               <th style={{ padding: '12px' }}>Membership</th>
               <th style={{ padding: '12px' }}>Languages</th>
+              <th style={{ padding: '12px', width: '80px' }}>Preview</th>
               {userRole !== 'admin' && <th style={{ padding: '12px' }}>Actions</th>}
             </tr>
           </thead>
@@ -788,7 +789,8 @@ export default function MediaManagement() {
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '120px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
-                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '50px' }}></div></td>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '40px' }}></div></td>
+                  {userRole !== 'admin' && <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '50px' }}></div></td>}
                 </tr>
               ))
             ) : (
@@ -813,6 +815,35 @@ export default function MediaManagement() {
                   <td style={{ padding: '12px' }}>
                     {asset.languages?.slice(0, 2).map((l, i) => <span key={i} className="badge">{l}</span>)}
                   </td>
+                  <td style={{ padding: '12px' }}>
+                    {(() => {
+                      let urlPath = '';
+                      if (asset.type === 'tvshow' || asset.type === 'tvshows') {
+                        urlPath = `/details/${asset._id}`;
+                      } else if (asset.type === 'movie' || asset.type === 'movies') {
+                        urlPath = `/details/${asset._id}`;
+                      } else if (asset.type === 'video') {
+                        urlPath = `/details/${asset._id}`;
+                      } else if (asset.type === 'episode') {
+                        const targetId = asset.program?.programId || asset._id;
+                        urlPath = `/details/${targetId}`;
+                      } else {
+                        urlPath = `/details/${asset._id}`;
+                      }
+                      return (
+                        <a 
+                          href={`${import.meta.env.VITE_WEB_URL || 'https://interplanetary.tv'}${urlPath}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="icon-btn"
+                          title="Preview Asset on ITV Web"
+                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color, #a855f7)' }}
+                        >
+                          <ExternalLink size={18} />
+                        </a>
+                      );
+                    })()}
+                  </td>
                   {userRole !== 'admin' && (
                   <td style={{ padding: '12px' }}>
                     <button className="icon-btn" onClick={() => handleEdit(asset)}><Edit2 size={18} /></button>
@@ -824,7 +855,7 @@ export default function MediaManagement() {
             )}
             {!loading && filteredAssets.length === 0 && (
               <tr>
-                <td colSpan="5" style={{ padding: '0' }}>
+                <td colSpan="7" style={{ padding: '0' }}>
                   <div className="empty-state">
                     <Film size={48} className="empty-state-icon" />
                     <p style={{ fontWeight: '500', fontSize: '1.1rem', marginBottom: '8px' }}>No Media Assets Found</p>

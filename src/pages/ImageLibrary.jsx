@@ -2,6 +2,76 @@ import React, { useState, useEffect } from 'react';
 import { Copy, Upload, Trash2, Check, Image as ImageIcon, Loader2 } from 'lucide-react';
 import './ImageLibrary.css';
 
+const ImageCard = ({ img, copiedUrl, copyToClipboard, formatSize, onDelete }) => {
+  const [dims, setDims] = useState(null);
+  
+  return (
+    <div className="image-card">
+      <div className="image-preview">
+        <img 
+          src={img.url} 
+          alt={img.name} 
+          loading="lazy" 
+          onLoad={(e) => {
+            setDims({
+              width: e.target.naturalWidth,
+              height: e.target.naturalHeight
+            });
+          }}
+        />
+      </div>
+      <div className="image-details">
+        <div className="image-name" title={img.name}>{img.name}</div>
+        <div className="image-meta">
+          <span>{formatSize(img.size)}</span>
+          {dims && <span>{dims.width} × {dims.height}</span>}
+          <span>{new Date(img.createdAt).toLocaleDateString()}</span>
+        </div>
+        <div className="image-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+          <button 
+            className={`copy-btn ${copiedUrl === img.url ? 'copied' : ''}`}
+            onClick={() => copyToClipboard(img.url)}
+            title="Copy URL"
+            style={{ flex: 1 }}
+          >
+            {copiedUrl === img.url ? <Check size={16} /> : <Copy size={16} />}
+            <span>{copiedUrl === img.url ? 'Copied!' : 'Copy URL'}</span>
+          </button>
+          
+          <button 
+            className="btn btn-secondary delete-btn"
+            onClick={() => onDelete(img.name)}
+            title="Delete Image"
+            style={{ 
+              padding: '0 10px', 
+              height: '36px', 
+              background: 'rgba(239, 68, 68, 0.1)', 
+              color: '#ef4444', 
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#ef4444';
+              e.currentTarget.style.color = '#fff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+              e.currentTarget.style.color = '#ef4444';
+            }}
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ImageLibrary = () => {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,8 +137,29 @@ const ImageLibrary = () => {
     }
   };
 
+  const handleDeleteImage = async (filename) => {
+    if (!window.confirm(`Are you sure you want to delete "${filename}"? This will permanently remove the image from the server.`)) {
+      return;
+    }
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api';
+      const response = await fetch(`${baseUrl}/images/${filename}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to delete image');
+      const data = await response.json();
+      if (data.success) {
+        fetchImages();
+      } else {
+        setError(data.message || 'Failed to delete image');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      setError('Failed to delete image');
+    }
+  };
+
   const copyToClipboard = (url) => {
-    // Determine the absolute URL if necessary, though relative works best
     const fullUrl = url.startsWith('http') ? url : window.location.origin + url;
     navigator.clipboard.writeText(fullUrl).then(() => {
       setCopiedUrl(url);
@@ -123,28 +214,14 @@ const ImageLibrary = () => {
       ) : (
         <div className="image-grid">
           {images.map((img, index) => (
-            <div key={index} className="image-card">
-              <div className="image-preview">
-                <img src={img.url} alt={img.name} loading="lazy" />
-              </div>
-              <div className="image-details">
-                <div className="image-name" title={img.name}>{img.name}</div>
-                <div className="image-meta">
-                  <span>{formatSize(img.size)}</span>
-                  <span>{new Date(img.createdAt).toLocaleDateString()}</span>
-                </div>
-                <div className="image-actions">
-                  <button 
-                    className={`copy-btn ${copiedUrl === img.url ? 'copied' : ''}`}
-                    onClick={() => copyToClipboard(img.url)}
-                    title="Copy URL"
-                  >
-                    {copiedUrl === img.url ? <Check size={16} /> : <Copy size={16} />}
-                    <span>{copiedUrl === img.url ? 'Copied!' : 'Copy URL'}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ImageCard 
+              key={index} 
+              img={img} 
+              copiedUrl={copiedUrl} 
+              copyToClipboard={copyToClipboard} 
+              formatSize={formatSize} 
+              onDelete={handleDeleteImage}
+            />
           ))}
         </div>
       )}
