@@ -163,7 +163,7 @@ export default function ArticleManagement() {
 
       {userRole !== 'admin' && showFormModal && (
       <div className="modal-overlay" onClick={cancelEdit}>
-        <div className="modal-content glass animate-scale-in" onClick={e => e.stopPropagation()} style={{ width: '700px', maxWidth: '90vw' }}>
+        <div className="modal-content glass animate-scale-in" onClick={e => e.stopPropagation()} style={{ width: '600px', maxWidth: '90vw' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h2>{editId ? 'Edit Article' : 'Draft New Article'}</h2>
             <button onClick={cancelEdit} className="icon-btn"><X size={24} /></button>

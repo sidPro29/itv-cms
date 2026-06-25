@@ -262,7 +262,7 @@ export default function MediaManagement() {
 
       {userRole !== 'admin' && showFormModal && (
       <div className="modal-overlay" onClick={cancelEdit}>
-        <div className="modal-content glass animate-scale-in" onClick={e => e.stopPropagation()} style={{ width: '800px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div className="modal-content glass animate-scale-in" onClick={e => e.stopPropagation()} style={{ width: '600px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h2>{editId ? 'Edit Media Asset' : 'Add New Media'}</h2>
             <button onClick={cancelEdit} className="icon-btn"><X size={24} /></button>
