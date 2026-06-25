@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Newspaper } from 'lucide-react';
+import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Newspaper, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
 import { getUserRole } from '../utils/auth';
+import ImageSelectorModal from '../components/ImageSelectorModal';
 
 export default function ArticleManagement() {
   const userRole = getUserRole();
@@ -10,6 +11,9 @@ export default function ArticleManagement() {
   const [showFormModal, setShowFormModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [showLibraryModal, setShowLibraryModal] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const initialForm = { title: '', subtitle: '', description: '', imageUrl: '', videoUrl: '', keywords: [''] };
   const [formData, setFormData] = useState(initialForm);
@@ -36,6 +40,29 @@ export default function ArticleManagement() {
       setError(err.message || 'Network error occurred while loading articles.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formDataObj = new FormData();
+    formDataObj.append('image', file);
+    
+    try {
+      setUploadingImage(true);
+      const res = await fetch('/api/upload', { method: 'POST', body: formDataObj });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      if (data.success) {
+        setFormData({ ...formData, imageUrl: data.url });
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+      e.target.value = null;
     }
   };
 
@@ -146,8 +173,23 @@ export default function ArticleManagement() {
             <input type="text" placeholder="Subtitle" value={formData.subtitle} onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })} />
 
             <div className="form-row">
-              <input type="text" placeholder="Image URL" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} />
-              <input type="text" placeholder="Video URL" value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} />
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Image URL</label>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <input type="text" placeholder="Image URL" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} style={{ margin: 0, flex: 1 }} />
+                  <button type="button" className="icon-btn" title="Choose from Library" onClick={() => setShowLibraryModal(true)} style={{ background: 'var(--bg-tertiary)', padding: '0 10px', borderRadius: '6px', border: '1px solid var(--border-color)', height: '42px' }}>
+                    <ImageIcon size={18} />
+                  </button>
+                  <label className="icon-btn" title="Upload from PC" style={{ background: 'var(--bg-tertiary)', padding: '0 10px', borderRadius: '6px', border: '1px solid var(--border-color)', height: '42px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {uploadingImage ? <Loader2 size={18} className="spin" /> : <Upload size={18} />}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} disabled={uploadingImage} />
+                  </label>
+                </div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Video URL</label>
+                <input type="text" placeholder="Video URL" value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} style={{ margin: '8px 0 0 0', width: '100%' }} />
+              </div>
             </div>
 
             <textarea placeholder="Article Content / Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required rows="5" />
@@ -183,6 +225,12 @@ export default function ArticleManagement() {
               <button type="submit" className="btn btn-primary">{editId ? 'Update Article' : 'Publish Article'}</button>
             </div>
           </form>
+          
+          <ImageSelectorModal 
+            isOpen={showLibraryModal} 
+            onClose={() => setShowLibraryModal(false)}
+            onSelect={(url) => setFormData({ ...formData, imageUrl: url })}
+          />
         </div>
       </div>
       )}
@@ -206,6 +254,7 @@ export default function ArticleManagement() {
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              <th style={{ padding: '12px', width: '50px' }}>Image</th>
               <th style={{ padding: '12px' }}>Title</th>
               <th style={{ padding: '12px' }}>Keywords</th>
               <th style={{ padding: '12px' }}>Date</th>
@@ -216,6 +265,7 @@ export default function ArticleManagement() {
             {loading ? (
               [...Array(4)].map((_, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '40px', height: '40px', borderRadius: '4px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '220px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '100px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
@@ -225,6 +275,15 @@ export default function ArticleManagement() {
             ) : (
               filteredArticles.map(article => (
                 <tr key={article._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}>
+                    {article.imageUrl ? (
+                      <img src={article.imageUrl} alt="thumbnail" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', background: '#111' }} />
+                    ) : (
+                      <div style={{ width: '40px', height: '40px', background: 'var(--bg-tertiary)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <ImageIcon size={20} color="var(--text-muted)" />
+                      </div>
+                    )}
+                  </td>
                   <td style={{ padding: '12px', fontWeight: 'bold' }}>{article.title}</td>
                   <td style={{ padding: '12px' }}>
                     {article.keywords?.slice(0, 2).map((k, i) => <span key={i} className="badge">{k}</span>)}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Film, Tv } from 'lucide-react';
+import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Film, Tv, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
 import { getUserRole } from '../utils/auth';
+import ImageSelectorModal from '../components/ImageSelectorModal';
 
 export default function MediaManagement() {
   const userRole = getUserRole();
@@ -21,6 +22,11 @@ export default function MediaManagement() {
   // States for parent program searchable dropdown
   const [programSearch, setProgramSearch] = useState('');
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
+
+  // States for Image Upload and Selection
+  const [showLibraryModal, setShowLibraryModal] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(null);
+  const [uploadingImageIndex, setUploadingImageIndex] = useState(null);
 
   const initialForm = { title: '', subtitle: '', rating: '', description: '', type: 'movie', languages: [], images: [''], programId: '', programName: '', membership_level: [], genres: [], tags: [] };
   // New UI state for video/trailer handling
@@ -61,6 +67,31 @@ export default function MediaManagement() {
       setError(err.message || 'Network error occurred while loading media assets.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e, index) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formDataObj = new FormData();
+    formDataObj.append('image', file);
+    
+    try {
+      setUploadingImageIndex(index);
+      const res = await fetch('/api/upload', { method: 'POST', body: formDataObj });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      if (data.success) {
+        const newI = [...formData.images];
+        newI[index] = data.url;
+        setFormData({ ...formData, images: newI });
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload image');
+    } finally {
+      setUploadingImageIndex(null);
+      e.target.value = null;
     }
   };
 
@@ -472,12 +503,21 @@ export default function MediaManagement() {
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Image URLs</label>
                 {formData.images.map((img, index) => (
-                  <div key={index} style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                  <div key={index} style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                     <input type="text" placeholder={`Image URL ${index + 1}`} value={img} onChange={(e) => {
                       const newI = [...formData.images];
                       newI[index] = e.target.value;
                       setFormData({ ...formData, images: newI });
-                    }} style={{ margin: 0 }} />
+                    }} style={{ margin: 0, flex: 1 }} />
+
+                    <button type="button" className="icon-btn" title="Choose from Library" onClick={() => { setActiveImageIndex(index); setShowLibraryModal(true); }} style={{ background: 'var(--bg-tertiary)', padding: '0 10px', borderRadius: '6px', border: '1px solid var(--border-color)', height: '42px' }}>
+                      <ImageIcon size={18} />
+                    </button>
+
+                    <label className="icon-btn" title="Upload from PC" style={{ background: 'var(--bg-tertiary)', padding: '0 10px', borderRadius: '6px', border: '1px solid var(--border-color)', height: '42px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {uploadingImageIndex === index ? <Loader2 size={18} className="spin" /> : <Upload size={18} />}
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleImageUpload(e, index)} disabled={uploadingImageIndex === index} />
+                    </label>
 
                     {index === formData.images.length - 1 ? (
                       <button type="button" className="btn btn-secondary" onClick={() => setFormData({ ...formData, images: [...formData.images, ''] })} style={{ padding: '0 15px', height: '42px' }}>
@@ -655,6 +695,18 @@ export default function MediaManagement() {
               <button type="submit" className="btn btn-primary">{editId ? 'Update Media' : 'Save Media'}</button>
             </div>
           </form>
+          
+          <ImageSelectorModal 
+            isOpen={showLibraryModal} 
+            onClose={() => setShowLibraryModal(false)}
+            onSelect={(url) => {
+              if (activeImageIndex !== null) {
+                const newI = [...formData.images];
+                newI[activeImageIndex] = url;
+                setFormData({ ...formData, images: newI });
+              }
+            }}
+          />
         </div>
       </div>
       )}
@@ -718,6 +770,7 @@ export default function MediaManagement() {
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              <th style={{ padding: '12px', width: '50px' }}>Image</th>
               <th style={{ padding: '12px' }}>Title</th>
               <th style={{ padding: '12px' }}>Type</th>
               <th style={{ padding: '12px' }}>Membership</th>
@@ -729,6 +782,7 @@ export default function MediaManagement() {
             {loading ? (
               [...Array(5)].map((_, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '40px', height: '40px', borderRadius: '4px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '180px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '120px' }}></div></td>
@@ -739,6 +793,15 @@ export default function MediaManagement() {
             ) : (
               filteredAssets.map(asset => (
                 <tr key={asset._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}>
+                    {asset.images && asset.images[0] ? (
+                      <img src={asset.images[0]} alt="thumbnail" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', background: '#111' }} />
+                    ) : (
+                      <div style={{ width: '40px', height: '40px', background: 'var(--bg-tertiary)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <ImageIcon size={20} color="var(--text-muted)" />
+                      </div>
+                    )}
+                  </td>
                   <td style={{ padding: '12px', fontWeight: 'bold' }}>{asset.title}</td>
                   <td style={{ padding: '12px' }}><span className="badge" style={{ textTransform: 'uppercase' }}>{asset.type}</span></td>
                   <td style={{ padding: '12px' }}>

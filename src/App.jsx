@@ -12,6 +12,7 @@ import PlanManagement from './pages/PlanManagement';
 import UserManagement from './pages/UserManagement';
 import Purchases from './pages/Purchases';
 import Analytics from './pages/Analytics';
+import ImageLibrary from './pages/ImageLibrary';
 
 // Components
 import Navbar from './components/Navbar';
@@ -52,6 +53,7 @@ function App() {
             <Route path="/users" element={<PrivateRoute isAuthenticated={isAuthenticated}><UserManagement /></PrivateRoute>} />
             <Route path="/purchases" element={<PrivateRoute isAuthenticated={isAuthenticated}><Purchases /></PrivateRoute>} />
             <Route path="/analytics" element={<PrivateRoute isAuthenticated={isAuthenticated}><Analytics /></PrivateRoute>} />
+            <Route path="/library" element={<PrivateRoute isAuthenticated={isAuthenticated}><ImageLibrary /></PrivateRoute>} />
             
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" />} />
