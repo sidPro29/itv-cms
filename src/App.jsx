@@ -4,7 +4,6 @@ import './App.css';
 
 import Login from './pages/Login';
 import ForcePasswordChange from './pages/ForcePasswordChange';
-import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import MediaManagement from './pages/MediaManagement';
 import ArticleManagement from './pages/ArticleManagement';
@@ -13,6 +12,7 @@ import UserManagement from './pages/UserManagement';
 import Purchases from './pages/Purchases';
 import Analytics from './pages/Analytics';
 import ImageLibrary from './pages/ImageLibrary';
+import EditPages from './pages/EditPages';
 
 // Components
 import Navbar from './components/Navbar';
@@ -43,7 +43,6 @@ function App() {
           <Routes>
             <Route path="/login" element={!isAuthenticated ? <Login setIsAuthenticated={setIsAuthenticated} /> : <Navigate to="/" />} />
             <Route path="/force-password-change" element={<ForcePasswordChange setIsAuthenticated={setIsAuthenticated} />} />
-            <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/" />} />
             
             {/* Protected Routes */}
             <Route path="/" element={<PrivateRoute isAuthenticated={isAuthenticated}><Dashboard /></PrivateRoute>} />
@@ -54,6 +53,7 @@ function App() {
             <Route path="/purchases" element={<PrivateRoute isAuthenticated={isAuthenticated}><Purchases /></PrivateRoute>} />
             <Route path="/analytics" element={<PrivateRoute isAuthenticated={isAuthenticated}><Analytics /></PrivateRoute>} />
             <Route path="/library" element={<PrivateRoute isAuthenticated={isAuthenticated}><ImageLibrary /></PrivateRoute>} />
+            <Route path="/edit-pages" element={<PrivateRoute isAuthenticated={isAuthenticated}><EditPages /></PrivateRoute>} />
             
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" />} />

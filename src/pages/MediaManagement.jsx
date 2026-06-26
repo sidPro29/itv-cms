@@ -173,6 +173,35 @@ export default function MediaManagement() {
   };
 
   const handleEdit = (asset) => {
+    // Resolve prefilled video/trailer methods and inputs
+    let videoMethod = 'url';
+    let videoInput = '';
+    const videosObj = asset.videos || {};
+    if (videosObj.clipId) {
+      videoMethod = 'clipId';
+      videoInput = videosObj.clipId;
+    } else if (videosObj.youtube) {
+      videoMethod = 'url';
+      videoInput = videosObj.youtube;
+    } else if (videosObj['non-svp']) {
+      videoMethod = 'url';
+      videoInput = videosObj['non-svp'];
+    }
+
+    let trailerMethod = 'url';
+    let trailerInput = '';
+    const trailerObj = asset.trailer || {};
+    if (trailerObj.clipId) {
+      trailerMethod = 'clipId';
+      trailerInput = trailerObj.clipId;
+    } else if (trailerObj.youtube) {
+      trailerMethod = 'url';
+      trailerInput = trailerObj.youtube;
+    } else if (trailerObj['non-svp']) {
+      trailerMethod = 'url';
+      trailerInput = trailerObj['non-svp'];
+    }
+
     setEditId(asset._id);
     setFormData({
       title: asset.title || '',
@@ -187,10 +216,12 @@ export default function MediaManagement() {
       membership_level: asset.membership_level || [],
       programId: asset.program?.programId || '',
       programName: asset.program?.programName || '',
-      videoMethod: 'url',
-      videoInput: '',
-      trailerMethod: 'url',
-      trailerInput: ''
+      videoMethod,
+      videoInput,
+      videoSvpRefNo: videosObj.svpRefNo || '',
+      trailerMethod,
+      trailerInput,
+      trailerSvpRefNo: trailerObj.svpRefNo || ''
     });
     setLangInput('');
     setGenreInput('');

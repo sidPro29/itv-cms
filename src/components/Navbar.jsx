@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Film, FileText, Tag, Users, LogOut, Sun, Moon, CreditCard, BarChart2, Image } from 'lucide-react';
+import { LayoutDashboard, Film, FileText, Tag, Users, LogOut, Sun, Moon, CreditCard, BarChart2, Image, FileEdit } from 'lucide-react';
 import { getUserProfile } from '../utils/auth';
 
 const Navbar = ({ setIsAuthenticated }) => {
@@ -81,6 +81,12 @@ const Navbar = ({ setIsAuthenticated }) => {
           <Link to="/analytics" className={`nav-link ${isActive('/analytics')}`}>
             <BarChart2 size={20} />
             <span>Analysis</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/edit-pages" className={`nav-link ${isActive('/edit-pages')}`}>
+            <FileEdit size={20} />
+            <span>Edit Pages</span>
           </Link>
         </li>
       </ul>

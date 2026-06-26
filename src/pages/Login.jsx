@@ -21,7 +21,7 @@ const Login = ({ setIsAuthenticated }) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, isCms: true })
       });
 
       const data = await response.json();
@@ -60,7 +60,7 @@ const Login = ({ setIsAuthenticated }) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, code })
+        body: JSON.stringify({ email, code, isCms: true })
       });
 
       const data = await response.json();
@@ -160,11 +160,7 @@ const Login = ({ setIsAuthenticated }) => {
         </form>
       )}
 
-      {step === 1 && (
-        <p style={{ textAlign: 'center', marginTop: '20px', color: 'var(--text-secondary)' }}>
-          Don't have an account? <Link to="/signup" style={{ color: 'var(--accent-primary)' }}>Sign up</Link>
-        </p>
-      )}
+
     </div>
   );
 };

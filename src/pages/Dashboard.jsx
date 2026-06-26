@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Film, Tv, Video, Newspaper, DollarSign, Activity, AlertTriangle } from 'lucide-react';
+import { Users, Film, Tv, Video, Newspaper, DollarSign, Activity, AlertTriangle, CreditCard, Settings, Shield, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 const Dashboard = () => {
   const [statsData, setStatsData] = useState({
     subscribers: 0,
+    wpVideos: 0,
     movies: 0,
     videos: 0,
     tvshows: 0,
@@ -19,24 +20,34 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const token = localStorage.getItem('token');
 
+  // Logs modal state
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [modalLogs, setModalLogs] = useState([]);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [totalLogs, setTotalLogs] = useState(0);
+  const [skip, setSkip] = useState(0);
+  const limit = 15;
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [statsRes, mediaRes, articlesRes] = await Promise.all([
+      const [statsRes, mediaRes, articlesRes, logsRes] = await Promise.all([
         fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/admin/stats', { headers: { 'x-auth-token': token } }),
         fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/media-assets', { headers: { 'x-auth-token': token } }),
-        fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/articles', { headers: { 'x-auth-token': token } })
+        fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/articles', { headers: { 'x-auth-token': token } }),
+        fetch((import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api') + '/logs?limit=10', { headers: { 'x-auth-token': token } })
       ]);
 
-      if (!statsRes.ok || !mediaRes.ok || !articlesRes.ok) {
-        throw new Error('Failed to fetch dashboard metrics from one or more server endpoints.');
+      if (!statsRes.ok || !mediaRes.ok || !articlesRes.ok || !logsRes.ok) {
+        throw new Error('Failed to fetch dashboard metrics from server endpoints.');
       }
 
-      const [stats, media, articles] = await Promise.all([
+      const [stats, media, articles, logsData] = await Promise.all([
         statsRes.json(),
         mediaRes.json(),
-        articlesRes.json()
+        articlesRes.json(),
+        logsRes.json()
       ]);
 
       setStatsData({
@@ -50,13 +61,7 @@ const Dashboard = () => {
         subscriberGrowth: stats.subscriberGrowth || []
       });
 
-      // Combine media and articles for recent activity (take top 6)
-      const combined = [
-        ...media.map(m => ({ ...m, category: m.type })),
-        ...articles.map(a => ({ ...a, category: 'article' }))
-      ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
-
-      setRecentActivity(combined);
+      setRecentActivity(logsData.logs || []);
 
     } catch (err) {
       console.error(err);
@@ -66,9 +71,32 @@ const Dashboard = () => {
     }
   };
 
+  const fetchModalLogs = async () => {
+    if (!showLogsModal) return;
+    setModalLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/logs?limit=${limit}&skip=${skip}`, {
+        headers: { 'x-auth-token': token }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setModalLogs(data.logs || []);
+        setTotalLogs(data.total || 0);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, [token]);
+
+  useEffect(() => {
+    fetchModalLogs();
+  }, [skip, showLogsModal]);
 
   const stats = [
     { title: 'Total Subscribers', value: statsData.subscribers, icon: <Users size={24} />, change: '+12% vs last month', positive: true, desc: 'Registered accounts' },
@@ -91,6 +119,26 @@ const Dashboard = () => {
     { name: 'Jan', count: 0 },
     { name: 'Feb', count: 0 }
   ];
+
+  const renderLogIcon = (collection) => {
+    switch (collection) {
+      case 'MediaAsset': return <Film size={20} />;
+      case 'Article': return <Newspaper size={20} />;
+      case 'User': return <Users size={20} />;
+      case 'Plan': return <CreditCard size={20} />;
+      case 'Page': return <Settings size={20} />;
+      default: return <Shield size={20} />;
+    }
+  };
+
+  const getActionStyles = (action) => {
+    switch (action) {
+      case 'CREATE': return { background: 'rgba(48, 209, 88, 0.15)', color: '#30d158' };
+      case 'UPDATE': return { background: 'rgba(0, 122, 255, 0.15)', color: '#007aff' };
+      case 'DELETE': return { background: 'rgba(255, 59, 48, 0.15)', color: '#ff3b30' };
+      default: return { background: 'rgba(175, 82, 222, 0.15)', color: '#af52de' }; // LOGIN
+    }
+  };
 
   return (
     <div className="animate-fade-in page-container" style={{ padding: 0 }}>
@@ -188,10 +236,19 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Activity */}
-      <div className="glass" style={{ padding: '24px', borderRadius: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-          <Activity size={24} className="gradient-text" />
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Recent Activity</h3>
+      <div className="glass" style={{ padding: '24px', borderRadius: '12px', marginBottom: '30px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Activity size={24} className="gradient-text" />
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0 }}>Recent Activity Log</h3>
+          </div>
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => { setSkip(0); setShowLogsModal(true); }}
+            style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+          >
+            View More
+          </button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -207,34 +264,121 @@ const Dashboard = () => {
               </div>
             ))
           ) : recentActivity.length > 0 ? (
-            recentActivity.map((item) => (
-              <div key={item._id} style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ width: '48px', height: '48px', background: 'var(--bg-tertiary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
-                  {item.category === 'article' 
-                    ? <Newspaper size={20} /> 
-                    : (item.category === 'tvshow' || item.category === 'tvshows') 
-                      ? <Tv size={20} /> 
-                      : (item.category === 'video' || item.category === 'videos') 
-                        ? <Video size={20} /> 
-                        : <Film size={20} />}
+            recentActivity.map((log) => {
+              const actStyle = getActionStyles(log.action);
+              return (
+                <div key={log._id} style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ width: '48px', height: '48px', background: 'var(--bg-tertiary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                    {renderLogIcon(log.collectionName)}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                      <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', margin: 0 }}>{log.details}</h4>
+                      <span className="badge" style={{ textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '0.7rem', padding: '2px 6px', background: actStyle.background, color: actStyle.color }}>
+                        {log.action}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                      Performed by <strong style={{ color: 'var(--text-primary)' }}>{log.username}</strong> on {new Date(log.createdAt).toLocaleDateString()} at {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <span className="badge" style={{ textTransform: 'uppercase', letterSpacing: '1px' }}>{log.collectionName}</span>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{item.title}</h4>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    Added on {new Date(item.createdAt).toLocaleDateString()} at {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-                <span className="badge" style={{ textTransform: 'uppercase', letterSpacing: '1px' }}>{item.category}</span>
-              </div>
-            ))
+              );
+            })
           ) : (
-            <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', padding: '20px 0' }}>No recent activity found. Start adding content!</p>
+            <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', padding: '20px 0', margin: 0 }}>No recent activity found. Start editing content!</p>
           )}
         </div>
       </div>
+
+      {/* LIVE AUDIT LOG MODAL */}
+      {showLogsModal && (
+        <div className="modal-overlay" onClick={() => setShowLogsModal(false)}>
+          <div className="modal-content glass animate-scale-in" onClick={e => e.stopPropagation()} style={{ width: '950px', maxWidth: '95vw', maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Activity size={24} style={{ color: 'var(--accent-primary)' }} />
+                <h2 style={{ margin: 0 }}>System Audit Logs</h2>
+              </div>
+              <button onClick={() => setShowLogsModal(false)} className="icon-btn"><X size={24} /></button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', marginBottom: '20px', paddingRight: '5px' }}>
+              {modalLoading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
+                  <Activity className="spinner" size={44} style={{ color: 'var(--accent-primary)', marginBottom: '10px' }} />
+                  <p style={{ color: 'var(--text-secondary)' }}>Loading audit logs...</p>
+                </div>
+              ) : modalLogs.length > 0 ? (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>
+                      <th style={{ textAlign: 'left', padding: '12px', fontWeight: 600 }}>User</th>
+                      <th style={{ textAlign: 'left', padding: '12px', fontWeight: 600 }}>Action</th>
+                      <th style={{ textAlign: 'left', padding: '12px', fontWeight: 600 }}>Module</th>
+                      <th style={{ textAlign: 'left', padding: '12px', fontWeight: 600 }}>Details</th>
+                      <th style={{ textAlign: 'left', padding: '12px', fontWeight: 600 }}>Date & Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modalLogs.map(log => {
+                      const actStyle = getActionStyles(log.action);
+                      return (
+                        <tr key={log._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '12px', fontWeight: 600 }}>{log.username}</td>
+                          <td style={{ padding: '12px' }}>
+                            <span className="badge" style={{ 
+                              textTransform: 'uppercase', 
+                              fontSize: '0.72rem', 
+                              padding: '3px 8px', 
+                              background: actStyle.background,
+                              color: actStyle.color
+                            }}>{log.action}</span>
+                          </td>
+                          <td style={{ padding: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>{log.collectionName}</td>
+                          <td style={{ padding: '12px' }}>{log.details}</td>
+                          <td style={{ padding: '12px', color: 'var(--text-muted)' }}>
+                            {new Date(log.createdAt).toLocaleDateString()} {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '40px' }}>No logs recorded yet.</p>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Showing {totalLogs === 0 ? 0 : skip + 1} to {Math.min(skip + limit, totalLogs)} of {totalLogs} entries
+              </span>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  disabled={skip === 0 || modalLoading} 
+                  onClick={() => setSkip(prev => Math.max(0, prev - limit))}
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '8px 16px' }}
+                >
+                  <ArrowLeft size={16} /> Previous
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  disabled={skip + limit >= totalLogs || modalLoading} 
+                  onClick={() => setSkip(prev => prev + limit)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '8px 16px' }}
+                >
+                  Next <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Dashboard;
-
