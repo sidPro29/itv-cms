@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Loader2, Plus, Trash2, ArrowUp, ArrowDown, HelpCircle, FileText, Phone, Settings, AlertTriangle, CheckCircle, Sparkles, CreditCard, Play, Tv, Download } from 'lucide-react';
+import { Save, Loader2, Plus, Trash2, ArrowUp, ArrowDown, HelpCircle, FileText, Phone, Settings, AlertTriangle, CheckCircle, Sparkles, CreditCard, Play, Tv, Download, Smartphone } from 'lucide-react';
+import ManageApks from '../components/ManageApks';
 
 const AVAILABLE_ICONS = [
   { name: 'Sparkles', icon: Sparkles },
@@ -214,10 +215,22 @@ export default function EditPages() {
             <Settings size={18} />
             <span>Footer Settings</span>
           </button>
+          <button 
+            className={`nav-link ${activeTab === 'apks' ? 'active' : ''}`} 
+            onClick={() => { setActiveTab('apks'); setError(null); setSuccessMsg(''); }}
+            style={{ width: '100%', border: 'none', background: 'none', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 15px', cursor: 'pointer', borderRadius: '8px' }}
+          >
+            <Smartphone size={18} />
+            <span>Manage APKs</span>
+          </button>
         </div>
 
         {/* Content Area */}
         <div className="glass" style={{ borderRadius: '12px', padding: '30px' }}>
+          
+          {/* MANAGE APKS */}
+          {activeTab === 'apks' && <ManageApks />}
+
           {/* PRIVACY POLICY EDITOR */}
           {activeTab === 'privacy-policy' && (
             <div className="cms-form">
