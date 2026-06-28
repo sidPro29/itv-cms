@@ -127,3 +127,28 @@
   padding: 30px;
 }
 
+/* Nav Link generic button styles for EditPages sidebar */
+.nav-link {
+  color: var(--text-secondary) !important;
+  transition: all var(--transition-speed) ease;
+}
+
+.nav-link:hover {
+  color: var(--text-primary) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="light"] .nav-link:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.nav-link.active {
+  color: var(--text-primary) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  font-weight: 600;
+}
+
+[data-theme="light"] .nav-link.active {
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+

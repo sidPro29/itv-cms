@@ -15,6 +15,17 @@ export default function ManageApks() {
   const token = localStorage.getItem('token');
   const baseUrl = import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api';
 
+  const getAbsoluteUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    try {
+      const origin = new URL(baseUrl).origin;
+      return `${origin}${url}`;
+    } catch (e) {
+      return url;
+    }
+  };
+
   useEffect(() => {
     fetchApks();
   }, []);
@@ -141,11 +152,11 @@ export default function ManageApks() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           {apks.map(apk => (
-            <div key={apk._id} style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <img src={`${baseUrl.replace('/api', '')}${apk.imageUrl}`} alt={apk.title} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', marginRight: '20px' }} />
+            <div key={apk._id} style={{ display: 'flex', alignItems: 'center', background: 'rgba(255, 255, 255, 0.05)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <img src={getAbsoluteUrl(apk.imageUrl)} alt={apk.title} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', marginRight: '20px' }} />
               <div style={{ flex: 1 }}>
                 <h3 style={{ margin: '0 0 5px 0', fontSize: '1.1rem' }}>{apk.title}</h3>
-                <a href={`${baseUrl.replace('/api', '')}${apk.apkUrl}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary-color)', fontSize: '0.9rem', textDecoration: 'none' }}>
+                <a href={getAbsoluteUrl(apk.apkUrl)} target="_blank" rel="noreferrer" style={{ color: 'var(--primary-color)', fontSize: '0.9rem', textDecoration: 'none' }}>
                   Download Link
                 </a>
               </div>
@@ -165,10 +176,10 @@ export default function ManageApks() {
       {showModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
           <div className="glass" style={{ width: '100%', maxWidth: '500px', padding: '30px', borderRadius: '12px' }}>
-            <h2 style={{ margin: '0 0 20px 0' }}>Add New APK</h2>
+            <h2 style={{ margin: '0 0 20px 0' }}>Add New App File</h2>
             <form onSubmit={handleUploadSubmit}>
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '8px' }}>Title (e.g. Android TV App)</label>
+                <label style={{ display: 'block', marginBottom: '8px' }}>Title (e.g. Android TV App / LGTV IPK)</label>
                 <input 
                   type="text" 
                   value={newApk.title} 
@@ -187,10 +198,10 @@ export default function ManageApks() {
                 />
               </div>
               <div style={{ marginBottom: '25px' }}>
-                <label style={{ display: 'block', marginBottom: '8px' }}>APK File</label>
+                <label style={{ display: 'block', marginBottom: '8px' }}>App / Package File (APK, IPK, ZIP, etc.)</label>
                 <input 
                   type="file" 
-                  accept=".apk,application/vnd.android.package-archive"
+                  accept=".apk,.ipk,.zip,application/octet-stream,application/vnd.android.package-archive"
                   onChange={e => setNewApk({ ...newApk, apkFile: e.target.files[0] })} 
                   required
                   style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', width: '100%', borderRadius: '4px' }}
@@ -202,7 +213,7 @@ export default function ManageApks() {
                 <button type="button" className="btn" onClick={() => setShowModal(false)} disabled={uploading}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={uploading} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {uploading ? <Loader2 size={16} className="spinner" /> : <UploadCloud size={16} />}
-                  <span>{uploading ? 'Uploading...' : 'Upload APK'}</span>
+                  <span>{uploading ? 'Uploading...' : 'Upload File'}</span>
                 </button>
               </div>
             </form>
