@@ -153,7 +153,7 @@ export default function ManageApks() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           {apks.map(apk => (
             <div key={apk._id} style={{ display: 'flex', alignItems: 'center', background: 'rgba(255, 255, 255, 0.05)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              <img src={getAbsoluteUrl(apk.imageUrl)} alt={apk.title} style={{ width: '110px', height: '60px', objectFit: 'contain', background: 'rgba(255, 255, 255, 0.05)', padding: '4px', borderRadius: '8px', marginRight: '20px' }} />
+              <img src={getAbsoluteUrl(apk.imageUrl)} alt={apk.title} style={{ width: '150px', height: '40px', objectFit: 'contain', background: 'rgba(255, 255, 255, 0.05)', padding: '4px', borderRadius: '8px', marginRight: '20px' }} />
               <div style={{ flex: 1 }}>
                 <h3 style={{ margin: '0 0 5px 0', fontSize: '1.1rem' }}>{apk.title}</h3>
                 <a href={getAbsoluteUrl(apk.apkUrl)} target="_blank" rel="noreferrer" style={{ color: 'var(--primary-color)', fontSize: '0.9rem', textDecoration: 'none' }}>
