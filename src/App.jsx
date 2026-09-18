@@ -18,15 +18,21 @@ import EditPages from './pages/EditPages';
 import Navbar from './components/Navbar';
 import PrivateRoute from './components/PrivateRoute';
 
+import { getUserRole } from './utils/auth';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in (has token)
+    // Check if user is logged in (has valid token and admin role)
     const token = localStorage.getItem('token');
-    if (token) {
+    const role = getUserRole();
+    if (token && (role === 'admin' || role === 'superAdmin')) {
       setIsAuthenticated(true);
+    } else if (token && role !== 'admin' && role !== 'superAdmin') {
+      localStorage.removeItem('token');
+      setIsAuthenticated(false);
     }
     setLoading(false);
   }, []);

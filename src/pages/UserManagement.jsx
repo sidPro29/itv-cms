@@ -418,9 +418,11 @@ export default function UserManagement() {
                       if (selectedPlanId) {
                         const planDetails = availablePlans.find(p => p._id === selectedPlanId);
                         if (planDetails && !editData.activePlans.find(p => p.planId === planDetails._id)) {
+                          const days = planDetails.billingCycle === 'Yearly' ? 365 : 30;
+                          const expiryDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
                           setEditData({
                             ...editData,
-                            activePlans: [...editData.activePlans, { planId: planDetails._id, planName: planDetails.name, expiryDate: new Date(Date.now() + planDetails.durationInDays * 24 * 60 * 60 * 1000) }]
+                            activePlans: [...editData.activePlans, { planId: planDetails._id, planName: planDetails.name, expiryDate }]
                           });
                         }
                       }
