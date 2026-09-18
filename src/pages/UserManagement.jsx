@@ -411,7 +411,7 @@ export default function UserManagement() {
                         <option key={plan._id} value={plan._id}>{plan.name}</option>
                       ))}
                     </select>
-                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '5px' }} onClick={(e) => {
+                    <button type="button" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '5px' }} onClick={(e) => {
                       e.preventDefault();
                       const selectEl = document.getElementById('modal-plan-select');
                       const selectedPlanId = selectEl.value;
@@ -420,10 +420,11 @@ export default function UserManagement() {
                         if (planDetails && !editData.activePlans.find(p => p.planId === planDetails._id)) {
                           const days = planDetails.billingCycle === 'Yearly' ? 365 : 30;
                           const expiryDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-                          setEditData({
-                            ...editData,
-                            activePlans: [...editData.activePlans, { planId: planDetails._id, planName: planDetails.name, expiryDate }]
-                          });
+                          setEditData(prev => ({
+                            ...prev,
+                            activePlans: [...prev.activePlans, { planId: planDetails._id, planName: planDetails.name, expiryDate }]
+                          }));
+                          selectEl.value = '';
                         }
                       }
                     }}>
