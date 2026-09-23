@@ -11,7 +11,7 @@ export default function PlanManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const initialForm = { name: '', amount: '', type: 'regular', benefits: [''] };
+  const initialForm = { name: '', amount: '', billingCycle: 'Monthly', type: 'regular', benefits: [''] };
   const [formData, setFormData] = useState(initialForm);
   const [token] = useState(localStorage.getItem('token'));
 
@@ -80,7 +80,8 @@ export default function PlanManagement() {
     setFormData({
       name: plan.name,
       amount: plan.amount,
-      type: plan.type,
+      billingCycle: plan.billingCycle || 'Monthly',
+      type: plan.type || 'regular',
       benefits: plan.benefits && plan.benefits.length > 0 ? plan.benefits : ['']
     });
     setShowFormModal(true);
@@ -143,6 +144,10 @@ export default function PlanManagement() {
             <div className="form-row">
               <input type="text" placeholder="Plan Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
               <input type="number" placeholder="Amount (USD)" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} required />
+              <select value={formData.billingCycle} onChange={(e) => setFormData({ ...formData, billingCycle: e.target.value })}>
+                <option value="Monthly">Monthly</option>
+                <option value="Yearly">Yearly</option>
+              </select>
               <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
                 <option value="regular">Regular</option>
                 <option value="adsPlan">Ads Plan</option>
@@ -203,6 +208,7 @@ export default function PlanManagement() {
             <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
               <th style={{ padding: '12px' }}>Name</th>
               <th style={{ padding: '12px' }}>Amount</th>
+              <th style={{ padding: '12px' }}>Cycle</th>
               <th style={{ padding: '12px' }}>Type</th>
               <th style={{ padding: '12px' }}>Benefits</th>
               {userRole !== 'admin' && <th style={{ padding: '12px' }}>Actions</th>}
@@ -214,6 +220,7 @@ export default function PlanManagement() {
                 <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '150px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '60px' }}></div></td>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '60px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '120px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '40px' }}></div></td>
@@ -224,6 +231,7 @@ export default function PlanManagement() {
                 <tr key={plan._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <td style={{ padding: '12px', fontWeight: 'bold' }}>{plan.name}</td>
                   <td style={{ padding: '12px', color: 'var(--success)' }}>${plan.amount}</td>
+                  <td style={{ padding: '12px' }}><span className="badge" style={{ background: 'rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>{plan.billingCycle || 'Monthly'}</span></td>
                   <td style={{ padding: '12px' }}><span className="plan-type">{plan.type}</span></td>
                   <td style={{ padding: '12px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                     {plan.benefits.length} benefits listed
