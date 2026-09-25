@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Film, Tv, Image as ImageIcon, Upload, Loader2, ExternalLink } from 'lucide-react';
+import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Film, Tv, Image as ImageIcon, Upload, Loader2, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { getUserRole } from '../utils/auth';
 import ImageSelectorModal from '../components/ImageSelectorModal';
 
@@ -9,6 +9,7 @@ export default function MediaManagement() {
   const [plans, setPlans] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState('all');
+  const [sortOrder, setSortOrder] = useState('desc'); // 'desc' (Newest Updated) | 'asc' (Oldest Updated)
   const [editId, setEditId] = useState(null);
   const [showFormModal, setShowFormModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -268,6 +269,12 @@ export default function MediaManagement() {
       return matchesSearch && (a.type === 'video' || a.type === 'videos');
     }
     return matchesSearch && a.type === selectedType;
+  });
+
+  const sortedAssets = [...filteredAssets].sort((a, b) => {
+    const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+    const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
   });
 
   const tvShowsList = assets.filter(a => a.type === 'tvshow' || a.type === 'tvshows');
@@ -796,6 +803,18 @@ export default function MediaManagement() {
                 style={{ paddingLeft: '36px', width: '200px', margin: 0 }}
               />
             </div>
+
+            {/* Sort Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', fontSize: '0.8rem', borderRadius: '20px', height: '38px', margin: 0 }}
+              title={sortOrder === 'desc' ? 'Click to sort Oldest Updated first' : 'Click to sort Newest Updated first'}
+            >
+              {sortOrder === 'desc' ? <ArrowDown size={15} style={{ color: 'var(--accent-primary, #007aff)' }} /> : <ArrowUp size={15} style={{ color: 'var(--accent-primary, #007aff)' }} />}
+              <span>{sortOrder === 'desc' ? 'Updated: Newest First' : 'Updated: Oldest First'}</span>
+            </button>
           </div>
         </div>
 
@@ -807,6 +826,7 @@ export default function MediaManagement() {
               <th style={{ padding: '12px' }}>Type</th>
               <th style={{ padding: '12px' }}>Membership</th>
               <th style={{ padding: '12px' }}>Languages</th>
+              <th style={{ padding: '12px' }}>Last Updated</th>
               <th style={{ padding: '12px', width: '80px' }}>Preview</th>
               {userRole !== 'admin' && <th style={{ padding: '12px' }}>Actions</th>}
             </tr>
@@ -820,12 +840,13 @@ export default function MediaManagement() {
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '120px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '100px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '40px' }}></div></td>
                   {userRole !== 'admin' && <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '50px' }}></div></td>}
                 </tr>
               ))
             ) : (
-              filteredAssets.map(asset => (
+              sortedAssets.map(asset => (
                 <tr key={asset._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <td style={{ padding: '12px' }}>
                     {asset.images && asset.images[0] ? (
@@ -845,6 +866,9 @@ export default function MediaManagement() {
                   </td>
                   <td style={{ padding: '12px' }}>
                     {asset.languages?.slice(0, 2).map((l, i) => <span key={i} className="badge">{l}</span>)}
+                  </td>
+                  <td style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    {asset.updatedAt ? new Date(asset.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : (asset.createdAt ? new Date(asset.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A')}
                   </td>
                   <td style={{ padding: '12px' }}>
                     {(() => {
@@ -884,9 +908,9 @@ export default function MediaManagement() {
                 </tr>
               ))
             )}
-            {!loading && filteredAssets.length === 0 && (
+            {!loading && sortedAssets.length === 0 && (
               <tr>
-                <td colSpan="7" style={{ padding: '0' }}>
+                <td colSpan="8" style={{ padding: '0' }}>
                   <div className="empty-state">
                     <Film size={48} className="empty-state-icon" />
                     <p style={{ fontWeight: '500', fontSize: '1.1rem', marginBottom: '8px' }}>No Media Assets Found</p>
