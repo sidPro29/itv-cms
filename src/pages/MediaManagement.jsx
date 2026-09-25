@@ -8,7 +8,7 @@ export default function MediaManagement() {
   const [assets, setAssets] = useState([]);
   const [plans, setPlans] = useState([]);
   const [search, setSearch] = useState('');
-  const [selectedType, setSelectedType] = useState('all');
+  const [selectedType, setSelectedType] = useState('tvshow');
   const [sortOrder, setSortOrder] = useState('desc'); // 'desc' (Newest Updated) | 'asc' (Oldest Updated)
   const [editId, setEditId] = useState(null);
   const [showFormModal, setShowFormModal] = useState(false);
