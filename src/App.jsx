@@ -13,6 +13,7 @@ import Purchases from './pages/Purchases';
 import Analytics from './pages/Analytics';
 import ImageLibrary from './pages/ImageLibrary';
 import EditPages from './pages/EditPages';
+import CommunityVerifications from './pages/CommunityVerifications';
 
 // Components
 import Navbar from './components/Navbar';
@@ -60,6 +61,7 @@ function App() {
             <Route path="/analytics" element={<PrivateRoute isAuthenticated={isAuthenticated}><Analytics /></PrivateRoute>} />
             <Route path="/library" element={<PrivateRoute isAuthenticated={isAuthenticated}><ImageLibrary /></PrivateRoute>} />
             <Route path="/edit-pages" element={<PrivateRoute isAuthenticated={isAuthenticated}><EditPages /></PrivateRoute>} />
+            <Route path="/community-verifications" element={<PrivateRoute isAuthenticated={isAuthenticated}><CommunityVerifications /></PrivateRoute>} />
             
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" />} />
