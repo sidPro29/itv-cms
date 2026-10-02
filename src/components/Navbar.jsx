@@ -92,7 +92,7 @@ const Navbar = ({ setIsAuthenticated }) => {
         <li>
           <Link to="/community-verifications" className={`nav-link ${isActive('/community-verifications')}`}>
             <ShieldCheck size={20} />
-            <span>Verifications</span>
+            <span>Community Verifications</span>
           </Link>
         </li>
       </ul>
