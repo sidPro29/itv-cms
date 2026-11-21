@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserCheck, ShieldAlert, Edit2, X, Save, AlertTriangle, Send, Loader2, Trash2, Plus } from 'lucide-react';
+import { Users, UserCheck, ShieldAlert, Edit2, X, Save, AlertTriangle, Send, Loader2, Trash2, Plus, ArrowUp, ArrowDown } from 'lucide-react';
 import { getUserRole, getUserId } from '../utils/auth';
 
 export default function UserManagement() {
@@ -129,6 +129,34 @@ export default function UserManagement() {
     setMetrics({ total, activePlans, admins });
   };
 
+  const handleMove = async (index, direction) => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= users.length) return;
+
+    const newUsers = [...users];
+    const temp = newUsers[index];
+    newUsers[index] = newUsers[targetIndex];
+    newUsers[targetIndex] = temp;
+
+    newUsers.forEach((item, idx) => { item.order = idx; });
+    setUsers(newUsers);
+
+    try {
+      const orderedIds = newUsers.map(u => u._id);
+      await fetch(`${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/users/reorder`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        },
+        body: JSON.stringify({ orderedIds })
+      });
+    } catch (err) {
+      console.error('Failed to save user reorder:', err);
+      fetchUsers();
+    }
+  };
+
   const handleEditClick = (user) => {
     setEditingUserId(user._id);
     setEditData({
@@ -227,6 +255,7 @@ export default function UserManagement() {
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              <th style={{ padding: '12px', width: '70px' }}>Slide</th>
               <th style={{ padding: '12px' }}>User ID</th>
               <th style={{ padding: '12px' }}>Username</th>
               <th style={{ padding: '12px' }}>Email</th>
@@ -240,6 +269,7 @@ export default function UserManagement() {
             {loading ? (
               [...Array(5)].map((_, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '45px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '120px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '180px' }}></div></td>
@@ -250,8 +280,30 @@ export default function UserManagement() {
                 </tr>
               ))
             ) : (
-              users.map(user => (
+              users.map((user, index) => (
                 <tr key={user._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button 
+                        className="icon-btn" 
+                        disabled={index === 0} 
+                        onClick={() => handleMove(index, 'up')} 
+                        title="Slide Up"
+                        style={{ opacity: index === 0 ? 0.25 : 1, cursor: index === 0 ? 'not-allowed' : 'pointer', padding: '4px' }}
+                      >
+                        <ArrowUp size={16} />
+                      </button>
+                      <button 
+                        className="icon-btn" 
+                        disabled={index === users.length - 1} 
+                        onClick={() => handleMove(index, 'down')} 
+                        title="Slide Down"
+                        style={{ opacity: index === users.length - 1 ? 0.25 : 1, cursor: index === users.length - 1 ? 'not-allowed' : 'pointer', padding: '4px' }}
+                      >
+                        <ArrowDown size={16} />
+                      </button>
+                    </div>
+                  </td>
                   <td style={{ padding: '12px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user._id}</td>
                   <td style={{ padding: '12px' }}>{user.username}</td>
                   <td style={{ padding: '12px' }}>{user.email}</td>

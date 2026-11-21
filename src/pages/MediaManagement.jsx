@@ -272,10 +272,50 @@ export default function MediaManagement() {
   });
 
   const sortedAssets = [...filteredAssets].sort((a, b) => {
+    if (a.order !== undefined && b.order !== undefined && a.order !== b.order) {
+      return a.order - b.order;
+    }
     const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
     const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
     return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
   });
+
+  const handleMove = async (index, direction) => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= sortedAssets.length) return;
+
+    const currentItem = sortedAssets[index];
+    const targetItem = sortedAssets[targetIndex];
+
+    const newAssets = [...assets];
+    const currentIndexInAll = newAssets.findIndex(a => a._id === currentItem._id);
+    const targetIndexInAll = newAssets.findIndex(a => a._id === targetItem._id);
+
+    if (currentIndexInAll === -1 || targetIndexInAll === -1) return;
+
+    // Swap positions
+    const temp = newAssets[currentIndexInAll];
+    newAssets[currentIndexInAll] = newAssets[targetIndexInAll];
+    newAssets[targetIndexInAll] = temp;
+
+    newAssets.forEach((item, idx) => { item.order = idx; });
+    setAssets(newAssets);
+
+    try {
+      const orderedIds = newAssets.map(a => a._id);
+      await fetch(`${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/media/reorder`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        },
+        body: JSON.stringify({ orderedIds })
+      });
+    } catch (err) {
+      console.error('Failed to save media reorder:', err);
+      fetchMedia();
+    }
+  };
 
   const tvShowsList = assets.filter(a => a.type === 'tvshow' || a.type === 'tvshows');
 
@@ -821,6 +861,7 @@ export default function MediaManagement() {
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              <th style={{ padding: '12px', width: '70px' }}>Slide</th>
               <th style={{ padding: '12px', width: '50px' }}>Image</th>
               <th style={{ padding: '12px' }}>Title</th>
               <th style={{ padding: '12px' }}>Type</th>
@@ -835,6 +876,7 @@ export default function MediaManagement() {
             {loading ? (
               [...Array(5)].map((_, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '45px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '40px', height: '40px', borderRadius: '4px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '180px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '80px' }}></div></td>
@@ -846,8 +888,30 @@ export default function MediaManagement() {
                 </tr>
               ))
             ) : (
-              sortedAssets.map(asset => (
+              sortedAssets.map((asset, index) => (
                 <tr key={asset._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button 
+                        className="icon-btn" 
+                        disabled={index === 0} 
+                        onClick={() => handleMove(index, 'up')} 
+                        title="Slide Up"
+                        style={{ opacity: index === 0 ? 0.25 : 1, cursor: index === 0 ? 'not-allowed' : 'pointer', padding: '4px' }}
+                      >
+                        <ArrowUp size={16} />
+                      </button>
+                      <button 
+                        className="icon-btn" 
+                        disabled={index === sortedAssets.length - 1} 
+                        onClick={() => handleMove(index, 'down')} 
+                        title="Slide Down"
+                        style={{ opacity: index === sortedAssets.length - 1 ? 0.25 : 1, cursor: index === sortedAssets.length - 1 ? 'not-allowed' : 'pointer', padding: '4px' }}
+                      >
+                        <ArrowDown size={16} />
+                      </button>
+                    </div>
+                  </td>
                   <td style={{ padding: '12px' }}>
                     {asset.images && asset.images[0] ? (
                       <img src={asset.images[0]} alt="thumbnail" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', background: '#111' }} />

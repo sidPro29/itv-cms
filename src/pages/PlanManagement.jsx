@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Sparkles, Tv, Megaphone, Users } from 'lucide-react';
+import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Sparkles, Tv, Megaphone, Users, ArrowUp, ArrowDown } from 'lucide-react';
 import { getUserRole } from '../utils/auth';
 
 export default function PlanManagement() {
@@ -121,6 +121,42 @@ export default function PlanManagement() {
     } catch (err) {
       console.error(err);
       alert('Network error occurred while deleting plan.');
+    }
+  };
+
+  const handleMove = async (index, direction) => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= filteredPlans.length) return;
+
+    const currentItem = filteredPlans[index];
+    const targetItem = filteredPlans[targetIndex];
+
+    const newPlans = [...plans];
+    const currentIndexInAll = newPlans.findIndex(p => p._id === currentItem._id);
+    const targetIndexInAll = newPlans.findIndex(p => p._id === targetItem._id);
+
+    if (currentIndexInAll === -1 || targetIndexInAll === -1) return;
+
+    // Swap positions
+    const temp = newPlans[currentIndexInAll];
+    newPlans[currentIndexInAll] = newPlans[targetIndexInAll];
+    newPlans[targetIndexInAll] = temp;
+
+    setPlans(newPlans);
+
+    try {
+      const orderedIds = newPlans.map(p => p._id);
+      await fetch(`${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/plans/reorder`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        },
+        body: JSON.stringify({ orderedIds })
+      });
+    } catch (err) {
+      console.error('Failed to save plan reorder:', err);
+      fetchPlans();
     }
   };
 
@@ -323,6 +359,7 @@ export default function PlanManagement() {
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              <th style={{ padding: '12px', width: '80px' }}>Slide</th>
               <th style={{ padding: '12px' }}>Name</th>
               <th style={{ padding: '12px' }}>Amount</th>
               <th style={{ padding: '12px' }}>Cycle</th>
@@ -335,6 +372,7 @@ export default function PlanManagement() {
             {loading ? (
               [...Array(4)].map((_, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '50px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '150px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '60px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '60px' }}></div></td>
@@ -344,8 +382,30 @@ export default function PlanManagement() {
                 </tr>
               ))
             ) : (
-              filteredPlans.map(plan => (
+              filteredPlans.map((plan, index) => (
                 <tr key={plan._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button 
+                        className="icon-btn" 
+                        disabled={index === 0} 
+                        onClick={() => handleMove(index, 'up')} 
+                        title="Slide Up"
+                        style={{ opacity: index === 0 ? 0.25 : 1, cursor: index === 0 ? 'not-allowed' : 'pointer', padding: '4px' }}
+                      >
+                        <ArrowUp size={16} />
+                      </button>
+                      <button 
+                        className="icon-btn" 
+                        disabled={index === filteredPlans.length - 1} 
+                        onClick={() => handleMove(index, 'down')} 
+                        title="Slide Down"
+                        style={{ opacity: index === filteredPlans.length - 1 ? 0.25 : 1, cursor: index === filteredPlans.length - 1 ? 'not-allowed' : 'pointer', padding: '4px' }}
+                      >
+                        <ArrowDown size={16} />
+                      </button>
+                    </div>
+                  </td>
                   <td style={{ padding: '12px', fontWeight: 'bold' }}>
                     <div>{plan.name}</div>
                     {plan.tagline && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 400 }}>{plan.tagline}</div>}
@@ -373,7 +433,7 @@ export default function PlanManagement() {
             )}
             {!loading && filteredPlans.length === 0 && (
               <tr>
-                <td colSpan="6" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <td colSpan="7" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
                   No plans found for the selected criteria.
                 </td>
               </tr>

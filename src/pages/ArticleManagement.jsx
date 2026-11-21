@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Newspaper, Image as ImageIcon, Upload, Loader2, ExternalLink } from 'lucide-react';
+import { PlusCircle, Trash2, Edit2, Search, X, AlertTriangle, Newspaper, Image as ImageIcon, Upload, Loader2, ExternalLink, ArrowUp, ArrowDown } from 'lucide-react';
 import { getUserRole } from '../utils/auth';
 import ImageSelectorModal from '../components/ImageSelectorModal';
 
@@ -140,6 +140,43 @@ export default function ArticleManagement() {
     }
   };
 
+  const handleMove = async (index, direction) => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= filteredArticles.length) return;
+
+    const currentItem = filteredArticles[index];
+    const targetItem = filteredArticles[targetIndex];
+
+    const newArticles = [...articles];
+    const currentIndexInAll = newArticles.findIndex(a => a._id === currentItem._id);
+    const targetIndexInAll = newArticles.findIndex(a => a._id === targetItem._id);
+
+    if (currentIndexInAll === -1 || targetIndexInAll === -1) return;
+
+    // Swap positions
+    const temp = newArticles[currentIndexInAll];
+    newArticles[currentIndexInAll] = newArticles[targetIndexInAll];
+    newArticles[targetIndexInAll] = temp;
+
+    newArticles.forEach((item, idx) => { item.order = idx; });
+    setArticles(newArticles);
+
+    try {
+      const orderedIds = newArticles.map(a => a._id);
+      await fetch(`${import.meta.env.VITE_API_URL || 'https://api.interplanetary.tv/api'}/articles/reorder`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        },
+        body: JSON.stringify({ orderedIds })
+      });
+    } catch (err) {
+      console.error('Failed to save article reorder:', err);
+      fetchArticles();
+    }
+  };
+
   const filteredArticles = articles.filter(a => a.title.toLowerCase().includes(search.toLowerCase()) || a.description.toLowerCase().includes(search.toLowerCase()));
 
   return (
@@ -255,6 +292,7 @@ export default function ArticleManagement() {
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              <th style={{ padding: '12px', width: '70px' }}>Slide</th>
               <th style={{ padding: '12px', width: '50px' }}>Image</th>
               <th style={{ padding: '12px' }}>Title</th>
               <th style={{ padding: '12px' }}>Keywords</th>
@@ -267,6 +305,7 @@ export default function ArticleManagement() {
             {loading ? (
               [...Array(4)].map((_, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '45px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '40px', height: '40px', borderRadius: '4px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '220px' }}></div></td>
                   <td style={{ padding: '12px' }}><div className="skeleton skeleton-row" style={{ width: '100px' }}></div></td>
@@ -276,8 +315,30 @@ export default function ArticleManagement() {
                 </tr>
               ))
             ) : (
-              filteredArticles.map(article => (
+              filteredArticles.map((article, index) => (
                 <tr key={article._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button 
+                        className="icon-btn" 
+                        disabled={index === 0} 
+                        onClick={() => handleMove(index, 'up')} 
+                        title="Slide Up"
+                        style={{ opacity: index === 0 ? 0.25 : 1, cursor: index === 0 ? 'not-allowed' : 'pointer', padding: '4px' }}
+                      >
+                        <ArrowUp size={16} />
+                      </button>
+                      <button 
+                        className="icon-btn" 
+                        disabled={index === filteredArticles.length - 1} 
+                        onClick={() => handleMove(index, 'down')} 
+                        title="Slide Down"
+                        style={{ opacity: index === filteredArticles.length - 1 ? 0.25 : 1, cursor: index === filteredArticles.length - 1 ? 'not-allowed' : 'pointer', padding: '4px' }}
+                      >
+                        <ArrowDown size={16} />
+                      </button>
+                    </div>
+                  </td>
                   <td style={{ padding: '12px' }}>
                     {article.imageUrl ? (
                       <img src={article.imageUrl} alt="thumbnail" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', background: '#111' }} />
